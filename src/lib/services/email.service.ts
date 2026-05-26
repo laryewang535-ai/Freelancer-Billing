@@ -4,9 +4,10 @@ import {
   buildDefaultInvoiceMessage,
   buildInvoiceEmailHtml,
 } from "@/lib/email/invoice-message";
+import { buildReminderEmail } from "@/lib/email/reminder-message";
 import { generatePdfBuffer } from "@/lib/services/pdf.service";
 import { SENDABLE_STATUSES } from "@/lib/constants/invoice-status";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, ReminderRuleType } from "@prisma/client";
 
 function decimalToNumber(value: Prisma.Decimal | null | undefined): number {
   if (!value) return 0;
@@ -149,19 +150,20 @@ async function resolveRecipientClient(userId: string, clientId: string) {
   });
 }
 
-/** 发送催款邮件 */
+/** 发送催款邮件（实时根据最新 Invoice 数据构建文案） */
 export async function sendReminderEmail(
   userId: string,
   invoiceId: string,
   reminderId: string,
-  subject: string,
-  body: string
+  type: ReminderRuleType
 ) {
   const invoice = await prisma.invoice.findFirst({
     where: { id: invoiceId, userId, deletedAt: null },
     include: {
       client: true,
-      user: { select: { email: true, companyName: true, name: true } },
+      user: {
+        select: { email: true, companyName: true, name: true, locale: true },
+      },
     },
   });
   if (!invoice) return null;
@@ -171,6 +173,19 @@ export async function sendReminderEmail(
   }
 
   const sellerName = invoice.user.companyName || invoice.user.name || "Freelancer";
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+
+  const { subject, html, text } = buildReminderEmail({
+    type,
+    invoiceNumber: invoice.invoiceNumber,
+    totalAmount: decimalToNumber(invoice.totalAmount),
+    currency: invoice.currency,
+    dueDate: invoice.dueDate,
+    clientName: invoice.client.contactName,
+    sellerName,
+    invoiceUrl: `${appUrl}/invoices/${invoice.id}`,
+    locale: invoice.user.locale,
+  });
 
   const emailJob = await prisma.emailJob.create({
     data: {
@@ -180,7 +195,7 @@ export async function sendReminderEmail(
       status: "PENDING",
       toEmail: invoice.client.email,
       subject,
-      body,
+      body: text,
     },
   });
 
@@ -188,7 +203,7 @@ export async function sendReminderEmail(
     const result = await sendEmail({
       to: invoice.client.email,
       subject,
-      html: body,
+      html,
       from: buildResendFrom(sellerName),
       replyTo: invoice.user.email ?? undefined,
     });
@@ -200,7 +215,7 @@ export async function sendReminderEmail(
 
     await prisma.reminder.update({
       where: { id: reminderId },
-      data: { status: "SENT", sentAt: new Date(), subject, body },
+      data: { status: "SENT", sentAt: new Date(), subject, body: html },
     });
 
     await prisma.invoiceActivity.create({
@@ -208,25 +223,23 @@ export async function sendReminderEmail(
         userId,
         invoiceId,
         type: "REMINDER_SENT",
-        message: `Reminder sent to ${invoice.client.email}`,
+        message: `Reminder (${type}) sent to ${invoice.client.email}`,
       },
     });
 
     return true;
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Failed";
     await prisma.reminder.update({
       where: { id: reminderId },
-      data: {
-        status: "FAILED",
-        errorMessage: error instanceof Error ? error.message : "Failed",
-      },
+      data: { status: "FAILED", errorMessage },
     });
     await prisma.emailJob.update({
       where: { id: emailJob.id },
       data: {
         status: "FAILED",
         failedAt: new Date(),
-        errorMessage: error instanceof Error ? error.message : "Failed",
+        errorMessage,
       },
     });
     throw error;

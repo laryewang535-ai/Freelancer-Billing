@@ -14,6 +14,7 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx scripts/seed.ts",
     "ls:check": "tsx scripts/lemonsqueezy-check.ts",
+    "test:reminders": "tsx scripts/test-reminders.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
