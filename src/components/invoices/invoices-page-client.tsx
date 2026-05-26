@@ -106,12 +106,32 @@ export function InvoicesPageClient({
           <h1 className="text-2xl font-semibold text-slate-900">Invoices</h1>
           <p className="mt-1 text-sm text-slate-600">共 {meta.total} 张 Invoice</p>
         </div>
-        <Link href="/invoices/new">
-          <Button>+ 创建 Invoice</Button>
-        </Link>
-        <Link href="/invoices/ai">
-          <Button variant="outline">AI Invoice</Button>
-        </Link>
+
+        {/* AI / 手动 创建：合并为一组操作 */}
+        <div className="inline-flex items-stretch overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+          <Link href="/invoices/ai" className="contents">
+            <button
+              type="button"
+              className="group inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 via-blue-600 to-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:from-indigo-600 hover:to-violet-700"
+            >
+              <span className="text-base leading-none">✨</span>
+              <span>AI Invoice</span>
+              <span className="ml-1 hidden rounded-md bg-white/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide sm:inline">
+                Smart
+              </span>
+            </button>
+          </Link>
+          <div className="my-1 w-px bg-slate-200" aria-hidden />
+          <Link href="/invoices/new" className="contents">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              <span className="text-base leading-none">＋</span>
+              <span>手动创建</span>
+            </button>
+          </Link>
+        </div>
       </div>
 
       {successMessage ? (

@@ -1,11 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/auth/auth-ui";
+import { CURRENCIES } from "@/lib/constants/currencies";
+import { INVOICE_TEMPLATES, PAPER_SIZES } from "@/lib/constants/invoice-templates";
+import { getAllowedTemplates } from "@/lib/billing/template-access";
 import { defaultLineItems } from "@/lib/utils/invoice-defaults";
-import { defaultDueDate } from "@/lib/utils/date-input";
+import { toDateInputValue } from "@/lib/utils/date-input";
+import { calcInvoiceTotals } from "@/lib/utils/invoice-calc";
+import { formatMoney } from "@/lib/utils/format";
+import {
+  InvoicePreview,
+  type PreviewClient,
+  type PreviewItem,
+  type PreviewSeller,
+} from "@/components/invoices/invoice-preview";
+import { LineItemsEditor } from "@/components/invoices/line-items-editor";
+import type { InvoiceTemplate, PaperSize, Plan } from "@prisma/client";
 
 type ClientOption = { id: string; companyName: string };
 
@@ -19,21 +32,91 @@ type AiResult = {
   items: Array<{ description: string; quantity: number; unitPrice: number }>;
 };
 
-export function AiInvoiceClient({ clients }: { clients: ClientOption[] }) {
+type AiInvoiceClientProps = {
+  previewNumber: string;
+  seller: PreviewSeller;
+  clients: ClientOption[];
+  clientsMap: Record<string, PreviewClient>;
+  userPlan: Plan;
+};
+
+function dueDateFromDays(days: number): string {
+  const due = new Date();
+  due.setDate(due.getDate() + days);
+  return toDateInputValue(due);
+}
+
+function matchClientId(clients: ClientOption[], hint: string): string {
+  const normalized = hint.trim().toLowerCase();
+  if (!normalized) return "";
+  const match = clients.find((c) =>
+    c.companyName.toLowerCase().includes(normalized)
+  );
+  return match?.id ?? "";
+}
+
+export function AiInvoiceClient({
+  previewNumber,
+  seller,
+  clients,
+  clientsMap,
+  userPlan,
+}: AiInvoiceClientProps) {
   const router = useRouter();
+  const allowedTemplates = getAllowedTemplates(userPlan);
+
   const [prompt, setPrompt] = useState(
     "Create an invoice for Google for website development, $3000 USD, due in 30 days"
   );
-  const [result, setResult] = useState<AiResult | null>(null);
+  const [generated, setGenerated] = useState(false);
   const [clientId, setClientId] = useState("");
+  const [currency, setCurrency] = useState("USD");
+  const [taxRatePercent, setTaxRatePercent] = useState(0);
+  const [dueDate, setDueDate] = useState("");
+  const [paymentTerms, setPaymentTerms] = useState("Net 30");
+  const [notes, setNotes] = useState("");
+  const [items, setItems] = useState<PreviewItem[]>(defaultLineItems());
+
+  const [template, setTemplate] = useState<InvoiceTemplate>("STANDARD");
+  const [paperSize, setPaperSize] = useState<PaperSize>("A4");
+  const [brandPrimaryColor, setBrandPrimaryColor] = useState("#2563EB");
+  const [brandLogoUrl, setBrandLogoUrl] = useState(seller.logoUrl ?? "");
+  const [footerSignature, setFooterSignature] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const client = clientId ? clientsMap[clientId] ?? null : null;
+  const totals = useMemo(
+    () => calcInvoiceTotals(items, taxRatePercent),
+    [items, taxRatePercent]
+  );
+
+  function handleTemplateChange(value: InvoiceTemplate) {
+    if (!allowedTemplates.includes(value)) {
+      setError("该模板需要 Pro 计划，请前往设置 → 订阅计划升级");
+      return;
+    }
+    setError(null);
+    setTemplate(value);
+  }
+
+  function applyAiResult(data: AiResult) {
+    setClientId(matchClientId(clients, data.clientHint));
+    setCurrency(data.currency || "USD");
+    setTaxRatePercent(data.taxRatePercent ?? 0);
+    setDueDate(dueDateFromDays(data.dueInDays ?? 30));
+    setPaymentTerms(data.paymentTerms || "Net 30");
+    setNotes(data.notes ?? "");
+    setItems(data.items?.length ? data.items : defaultLineItems());
+    setGenerated(true);
+  }
+
   async function generate() {
     setLoading(true);
     setError(null);
-    setResult(null);
+    setGenerated(false);
 
     try {
       const res = await fetch("/api/ai/invoice", {
@@ -44,15 +127,9 @@ export function AiInvoiceClient({ clients }: { clients: ClientOption[] }) {
       const json = await res.json();
       if (!res.ok || !json.success) {
         setError(json.error ?? "生成失败");
-        setLoading(false);
         return;
       }
-      setResult(json.data);
-
-      const match = clients.find((c) =>
-        c.companyName.toLowerCase().includes(json.data.clientHint.toLowerCase())
-      );
-      if (match) setClientId(match.id);
+      applyAiResult(json.data);
     } catch {
       setError("网络错误");
     } finally {
@@ -61,16 +138,17 @@ export function AiInvoiceClient({ clients }: { clients: ClientOption[] }) {
   }
 
   async function createInvoice() {
-    if (!result || !clientId) {
+    if (!clientId) {
       setError("请选择客户");
+      return;
+    }
+    if (items.some((i) => !i.description.trim())) {
+      setError("请填写所有行项目描述");
       return;
     }
 
     setCreating(true);
     setError(null);
-
-    const due = new Date();
-    due.setDate(due.getDate() + result.dueInDays);
 
     try {
       const res = await fetch("/api/invoices", {
@@ -78,12 +156,18 @@ export function AiInvoiceClient({ clients }: { clients: ClientOption[] }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clientId,
-          currency: result.currency,
-          taxRatePercent: result.taxRatePercent,
-          dueDate: due.toISOString(),
-          paymentTerms: result.paymentTerms,
-          notes: result.notes,
-          items: result.items.length ? result.items : defaultLineItems(),
+          currency,
+          taxRatePercent,
+          dueDate: new Date(dueDate).toISOString(),
+          paymentTerms: paymentTerms || null,
+          notes: notes || null,
+          template,
+          paperSize,
+          brandPrimaryColor: template === "BRANDING" ? brandPrimaryColor : null,
+          brandLogoUrl: template === "BRANDING" ? brandLogoUrl || null : null,
+          footerSignature:
+            template === "BRANDING" ? footerSignature || null : null,
+          items,
         }),
       });
       const json = await res.json();
@@ -107,60 +191,292 @@ export function AiInvoiceClient({ clients }: { clients: ClientOption[] }) {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-semibold text-slate-900">AI Invoice</h1>
-      <p className="mt-1 text-sm text-slate-600">用自然语言描述，自动生成 Invoice 草稿</p>
-
-      <div className="mt-8 max-w-2xl space-y-4">
+      <div className="flex items-start gap-3">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-blue-600 to-violet-600 text-lg text-white shadow-md">
+          ✨
+        </span>
         <div>
+          <h1 className="text-2xl font-semibold text-slate-900">AI Invoice</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            用自然语言描述，生成后可选择模板与版式，确认无误再创建
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8 max-w-3xl">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <label className="block text-sm font-medium text-slate-700">
-            Describe your work
+            描述你的工作
           </label>
           <textarea
             rows={4}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            placeholder="e.g. Invoice Shopify for logo design $1500 CAD"
+            className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            placeholder="例如：为 Google 开一张网站开发发票，3000 美元，30 天付款"
           />
+          <div className="mt-3 flex items-center gap-3">
+            <Button onClick={generate} disabled={loading}>
+              {loading ? "生成中..." : "✨ Generate Invoice"}
+            </Button>
+            {generated ? (
+              <span className="text-xs text-emerald-600">
+                ✓ 已根据描述填充下方表单，可继续修改
+              </span>
+            ) : null}
+          </div>
         </div>
 
-        <Button onClick={generate} disabled={loading}>
-          {loading ? "生成中..." : "Generate Invoice"}
-        </Button>
-
         {error ? (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-error">{error}</p>
-        ) : null}
-
-        {result ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="font-semibold">AI 生成结果</h2>
-            <pre className="mt-3 overflow-auto rounded-lg bg-slate-50 p-3 text-xs">
-              {JSON.stringify(result, null, 2)}
-            </pre>
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-700">选择客户</label>
-              <select
-                value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
-                className="mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm"
-              >
-                <option value="">Select Client</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.companyName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <Button className="mt-4" onClick={createInvoice} disabled={creating}>
-              {creating ? "创建中..." : "创建 Draft Invoice"}
-            </Button>
-          </div>
+          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-error">
+            {error}
+          </p>
         ) : null}
       </div>
+
+      {generated ? (
+        <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+          <div className="space-y-6">
+            {/* 模板与版式 */}
+            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="font-medium text-slate-900">模板与版式</h2>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {INVOICE_TEMPLATES.map((t) => {
+                  const locked = !allowedTemplates.includes(t.value);
+                  return (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => handleTemplateChange(t.value)}
+                      className={`rounded-lg border p-3 text-left text-sm transition ${
+                        template === t.value
+                          ? "border-primary bg-blue-50 ring-2 ring-primary/20"
+                          : locked
+                            ? "border-slate-200 bg-slate-50 opacity-70"
+                            : "border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <p className="font-medium text-slate-900">
+                        {t.label}
+                        {locked ? (
+                          <span className="ml-1 text-xs text-amber-600">Pro</span>
+                        ) : null}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {t.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-slate-700">
+                  纸张规格
+                </label>
+                <select
+                  value={paperSize}
+                  onChange={(e) => setPaperSize(e.target.value as PaperSize)}
+                  className="mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm"
+                >
+                  {PAPER_SIZES.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {template === "BRANDING" ? (
+                <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">
+                      品牌主色
+                    </label>
+                    <div className="mt-1 flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={brandPrimaryColor}
+                        onChange={(e) => setBrandPrimaryColor(e.target.value)}
+                        className="h-11 w-14 cursor-pointer rounded border border-slate-300"
+                      />
+                      <input
+                        value={brandPrimaryColor}
+                        onChange={(e) => setBrandPrimaryColor(e.target.value)}
+                        className="h-11 flex-1 rounded-lg border border-slate-300 px-3 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">
+                      Logo URL
+                    </label>
+                    <input
+                      value={brandLogoUrl}
+                      onChange={(e) => setBrandLogoUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">
+                      页脚签名
+                    </label>
+                    <input
+                      value={footerSignature}
+                      onChange={(e) => setFooterSignature(e.target.value)}
+                      placeholder="Thank you for your business"
+                      className="mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm"
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </section>
+
+            {/* 客户与条款 */}
+            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="font-medium text-slate-900">客户与条款</h2>
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">
+                    客户
+                  </label>
+                  <select
+                    value={clientId}
+                    onChange={(e) => setClientId(e.target.value)}
+                    className="mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="">Select Client</option>
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.companyName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">
+                      币种
+                    </label>
+                    <select
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      className="mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm"
+                    >
+                      {CURRENCIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.code} — {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">
+                      税率 (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={taxRatePercent}
+                      onChange={(e) =>
+                        setTaxRatePercent(Number(e.target.value) || 0)
+                      }
+                      className="mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">
+                      到期日
+                    </label>
+                    <input
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                      className="mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">
+                      付款条款
+                    </label>
+                    <input
+                      value={paymentTerms}
+                      onChange={(e) => setPaymentTerms(e.target.value)}
+                      className="mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700">
+                    备注
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    placeholder="Optional notes"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* 行项目 */}
+            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="mb-3 font-medium text-slate-900">行项目</h2>
+              <LineItemsEditor items={items} onChange={setItems} />
+              <div className="mt-4 flex justify-end border-t border-slate-100 pt-3 text-sm">
+                <span className="text-slate-600">合计：</span>
+                <span className="ml-2 font-semibold text-slate-900">
+                  {formatMoney(totals.totalAmount, currency)}
+                </span>
+              </div>
+            </section>
+
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={createInvoice} disabled={creating}>
+                {creating ? "创建中..." : "创建 Draft Invoice"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={generate}
+                disabled={loading}
+              >
+                重新生成
+              </Button>
+            </div>
+          </div>
+
+          {/* 预览 */}
+          <div className="lg:sticky lg:top-6 lg:self-start">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-medium text-slate-700">实时预览</p>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                {paperSize === "LETTER" ? "Letter" : "A4"}
+              </span>
+            </div>
+            <InvoicePreview
+              invoiceNumber={previewNumber}
+              invoiceDate={new Date()}
+              dueDate={dueDate}
+              currency={currency}
+              taxRatePercent={taxRatePercent}
+              paymentTerms={paymentTerms}
+              notes={notes}
+              template={template}
+              paperSize={paperSize}
+              brandPrimaryColor={brandPrimaryColor}
+              brandLogoUrl={brandLogoUrl}
+              footerSignature={footerSignature}
+              client={client}
+              seller={seller}
+              items={items}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

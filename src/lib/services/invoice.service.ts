@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { generateInvoiceNumber } from "@/lib/services/invoice-number.service";
+import { generateInvoiceNumber, peekNextInvoiceSerial, formatInvoiceNumber } from "@/lib/services/invoice-number.service";
 import { assertCanCreateInvoice, getUserPlan } from "@/lib/billing/plan-limits";
 import { assertTemplateAllowed } from "@/lib/billing/template-access";
 import {
@@ -51,11 +51,8 @@ async function resolveTemplateFields(
 /** 预览下一个编号（不消耗序列） */
 export async function peekNextInvoiceNumber(userId: string): Promise<string> {
   const year = new Date().getFullYear();
-  const seq = await prisma.invoiceSequence.findUnique({
-    where: { userId_year: { userId, year } },
-  });
-  const next = (seq?.lastNumber ?? 0) + 1;
-  return `INV-${year}-${String(next).padStart(4, "0")}`;
+  const next = await peekNextInvoiceSerial(userId);
+  return formatInvoiceNumber(year, next);
 }
 
 /** Invoice 列表 */
@@ -181,11 +178,11 @@ export async function createInvoice(userId: string, input: CreateInvoiceInput) {
   if (!client) throw new Error("CLIENT_NOT_FOUND");
 
   const totals = calcInvoiceTotals(input.items, input.taxRatePercent ?? 0);
-  const invoiceNumber = await generateInvoiceNumber(userId);
   const invoiceDate = input.invoiceDate ?? new Date();
   const templateFields = await resolveTemplateFields(userId, input);
 
   return prisma.$transaction(async (tx) => {
+    const invoiceNumber = await generateInvoiceNumber(userId, tx);
     const invoice = await tx.invoice.create({
       data: {
         userId,
@@ -392,9 +389,8 @@ export async function duplicateInvoice(userId: string, invoiceId: string) {
   });
   if (!source) return null;
 
-  const invoiceNumber = await generateInvoiceNumber(userId);
-
   return prisma.$transaction(async (tx) => {
+    const invoiceNumber = await generateInvoiceNumber(userId, tx);
     const invoice = await tx.invoice.create({
       data: {
         userId,

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       const msg = error.message.toLowerCase();
       if (msg.includes("timed out") || msg.includes("timeout")) {
         return fail(
-          "OpenAI 请求超时，请检查网络；国内环境需配置 OPENAI_BASE_URL 或使用 VPN",
+          "OpenAI 请求超时，请检查 OPENAI_HTTP_PROXY 或 VPN 是否可用",
           504,
           "AI_TIMEOUT"
         );
@@ -59,13 +59,13 @@ export async function POST(request: NextRequest) {
         msg.includes("enotfound")
       ) {
         return fail(
-          "无法连接 OpenAI，请检查网络或配置 OPENAI_BASE_URL",
+          "无法连接 OpenAI，请检查 OPENAI_HTTP_PROXY 或 OPENAI_BASE_URL",
           503,
           "AI_NETWORK_ERROR"
         );
       }
     }
-    console.error("[ai invoice]", error);
+    console.error("[ai invoice]", error instanceof Error ? error.message : error);
     return fail("AI 生成失败", 500);
   }
 }

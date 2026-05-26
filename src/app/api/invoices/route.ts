@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { Prisma } from "@prisma/client";
 import { getSessionUser } from "@/lib/auth/session";
 import { ok, fail } from "@/lib/api/response";
 import {
@@ -51,6 +52,12 @@ export async function POST(request: NextRequest) {
       }
       if (error.message === "TEMPLATE_REQUIRES_PRO") {
         return fail("该模板需要 Pro 计划，请前往设置升级", 403, "TEMPLATE_REQUIRES_PRO");
+      }
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        return fail("Invoice 编号冲突，请重试", 409, "INVOICE_NUMBER_CONFLICT");
       }
     }
     console.error("[invoices POST]", error);
