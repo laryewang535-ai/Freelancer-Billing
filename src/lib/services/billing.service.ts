@@ -253,6 +253,28 @@ export async function syncFromLemonSqueezySubscription(
   });
 }
 
+/** 判断是否为 Lemon Squeezy 404 错误（订阅 ID 不属于当前 API Key 所在店）
+ * 出现场景：用户换了 LS 账号 / 重建 store / sub 已被删
+ * 处理策略：清掉本地 stale id，走兜底重新匹配
+ */
+function isLemonSqueezyNotFound(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    /Lemon Squeezy API 404/i.test(error.message)
+  );
+}
+
+async function clearStaleLemonSqueezyLink(userId: string) {
+  await prisma.subscription.update({
+    where: { userId },
+    data: {
+      lemonSqueezySubscriptionId: null,
+      lemonSqueezyCustomerId: null,
+      lemonSqueezyVariantId: null,
+    },
+  });
+}
+
 /** 支付成功页主动同步 */
 export async function syncSubscriptionForUser(
   userId: string,
@@ -265,8 +287,21 @@ export async function syncSubscriptionForUser(
   const local = await prisma.subscription.findUnique({ where: { userId } });
 
   if (local?.lemonSqueezySubscriptionId) {
-    await syncFromLemonSqueezySubscription(local.lemonSqueezySubscriptionId, userId);
-    return getBillingStatus(userId);
+    try {
+      await syncFromLemonSqueezySubscription(
+        local.lemonSqueezySubscriptionId,
+        userId
+      );
+      return getBillingStatus(userId);
+    } catch (error) {
+      if (!isLemonSqueezyNotFound(error)) throw error;
+      console.warn(
+        "[billing sync] stale lemonSqueezySubscriptionId detected, clearing and falling back:",
+        local.lemonSqueezySubscriptionId
+      );
+      await clearStaleLemonSqueezyLink(userId);
+      // 继续走下面的兜底匹配流程
+    }
   }
 
   const user = await prisma.user.findUnique({
