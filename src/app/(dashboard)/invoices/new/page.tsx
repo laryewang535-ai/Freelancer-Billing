@@ -44,7 +44,7 @@ export default async function NewInvoicePage() {
   ]);
 
   if (clients.length === 0) {
-    redirect("/clients");
+    redirect("/clients?hint=need-client-for-invoice&openCreate=1");
   }
 
   const clientsMap = Object.fromEntries(

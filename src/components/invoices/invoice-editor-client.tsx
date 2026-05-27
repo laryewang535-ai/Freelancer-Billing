@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/auth/auth-ui";
+import { FormSubmitError } from "@/components/ui/form-submit-error";
 import { CURRENCIES } from "@/lib/constants/currencies";
 import { INVOICE_TEMPLATES, PAPER_SIZES } from "@/lib/constants/invoice-templates";
 import { getAllowedTemplates } from "@/lib/billing/template-access";
@@ -79,7 +80,8 @@ export function InvoiceEditorClient({
   const [items, setItems] = useState<PreviewItem[]>(
     initial?.items?.length ? initial.items : defaultLineItems()
   );
-  const [error, setError] = useState<string | null>(null);
+  const [templateError, setTemplateError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const client = clientId ? clientsMap[clientId] ?? null : null;
@@ -90,10 +92,10 @@ export function InvoiceEditorClient({
 
   function handleTemplateChange(value: InvoiceTemplate) {
     if (!allowedTemplates.includes(value)) {
-      setError("该模板需要 Pro 计划，请前往设置 → 订阅计划升级");
+      setTemplateError("该模板需要 Pro 计划，请前往设置 → 订阅计划升级");
       return;
     }
-    setError(null);
+    setTemplateError(null);
     setTemplate(value);
   }
 
@@ -110,15 +112,15 @@ export function InvoiceEditorClient({
   }
 
   async function submit(andSend: boolean) {
-    setError(null);
+    setSubmitError(null);
 
     if (!clientId) {
-      setError("请选择客户");
+      setSubmitError("请选择客户");
       return;
     }
 
     if (items.some((i) => !i.description.trim())) {
-      setError("请填写所有行项目描述");
+      setSubmitError("请填写所有行项目描述");
       return;
     }
 
@@ -149,7 +151,7 @@ export function InvoiceEditorClient({
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setError(json.error ?? "保存失败");
+        setSubmitError(json.error ?? "保存失败");
         setLoading(false);
         return;
       }
@@ -164,7 +166,7 @@ export function InvoiceEditorClient({
       router.push(`/invoices/${id}`);
       router.refresh();
     } catch {
-      setError("网络错误");
+      setSubmitError("网络错误");
       setLoading(false);
     }
   }
@@ -264,6 +266,7 @@ export function InvoiceEditorClient({
                 </div>
               </div>
             ) : null}
+            <FormSubmitError message={templateError} />
           </section>
 
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -353,9 +356,7 @@ export function InvoiceEditorClient({
             </div>
           </div>
 
-          {error ? (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-error">{error}</p>
-          ) : null}
+          <FormSubmitError message={submitError} />
 
           <div className="flex flex-wrap gap-3">
             <Button onClick={saveDraft} disabled={loading}>

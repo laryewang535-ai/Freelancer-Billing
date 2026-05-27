@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { auth } from "../../../../auth";
 import { redirect } from "next/navigation";
 import { listClients } from "@/lib/services/client.service";
@@ -10,9 +11,11 @@ export default async function ClientsPage() {
   const result = await listClients(session.user.id);
 
   return (
-    <ClientsPageClient
-      initialItems={result.items}
-      initialMeta={result.meta}
-    />
+    <Suspense fallback={<p className="text-sm text-slate-500">加载中...</p>}>
+      <ClientsPageClient
+        initialItems={result.items}
+        initialMeta={result.meta}
+      />
+    </Suspense>
   );
 }

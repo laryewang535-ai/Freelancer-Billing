@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { COUNTRIES } from "@/lib/constants/countries";
+import { createClientSchema } from "@/lib/validators/client";
 import { Button, Input } from "@/components/auth/auth-ui";
+import { FormSubmitError } from "@/components/ui/form-submit-error";
 import { cn } from "@/lib/utils/cn";
 
 export type ClientFormValues = {
@@ -43,13 +45,17 @@ export function ClientFormDialog({
   clientId,
 }: ClientFormDialogProps) {
   const [form, setForm] = useState<ClientFormValues>(EMPTY_FORM);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ClientFormValues, string>>>(
+    {}
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
       setForm({ ...EMPTY_FORM, ...initialValues });
-      setError(null);
+      setSubmitError(null);
+      setFieldErrors({});
     }
   }, [open, initialValues]);
 
@@ -60,12 +66,19 @@ export function ClientFormDialog({
     value: ClientFormValues[K]
   ) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setSubmitError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
+    setSubmitError(null);
+    setFieldErrors({});
 
     const payload = {
       ...form,
@@ -74,18 +87,34 @@ export function ClientFormDialog({
       notes: form.notes || null,
     };
 
+    const parsed = createClientSchema.safeParse(payload);
+    if (!parsed.success) {
+      const next: Partial<Record<keyof ClientFormValues, string>> = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0] as keyof ClientFormValues | undefined;
+        if (key && !next[key]) {
+          next[key] = issue.message;
+        }
+      }
+      setFieldErrors(next);
+      setSubmitError("请完善标红字段后再提交");
+      return;
+    }
+
+    setLoading(true);
+
     try {
       const url =
         mode === "create" ? "/api/clients" : `/api/clients/${clientId}`;
       const res = await fetch(url, {
         method: mode === "create" ? "POST" : "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(parsed.data),
       });
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setError(json.error ?? "操作失败");
+        setSubmitError(json.error ?? "操作失败");
         setLoading(false);
         return;
       }
@@ -93,7 +122,7 @@ export function ClientFormDialog({
       onSuccess();
       onClose();
     } catch {
-      setError("网络错误，请稍后重试");
+      setSubmitError("网络错误，请稍后重试");
     } finally {
       setLoading(false);
     }
@@ -112,27 +141,27 @@ export function ClientFormDialog({
           {mode === "create" ? "新建客户" : "编辑客户"}
         </h2>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4">
           <Input
             label="Company Name"
             name="companyName"
-            required
             value={form.companyName}
+            error={fieldErrors.companyName}
             onChange={(e) => updateField("companyName", e.target.value)}
           />
           <Input
             label="Contact Name"
             name="contactName"
-            required
             value={form.contactName}
+            error={fieldErrors.contactName}
             onChange={(e) => updateField("contactName", e.target.value)}
           />
           <Input
             label="Email"
             name="email"
             type="email"
-            required
             value={form.email}
+            error={fieldErrors.email}
             onChange={(e) => updateField("email", e.target.value)}
           />
 
@@ -143,10 +172,12 @@ export function ClientFormDialog({
             <select
               id="country"
               name="country"
-              required
               value={form.country}
               onChange={(e) => updateField("country", e.target.value)}
-              className="flex h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className={cn(
+                "flex h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
+                fieldErrors.country && "border-error focus:border-error focus:ring-error/20"
+              )}
             >
               {COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>
@@ -154,6 +185,9 @@ export function ClientFormDialog({
                 </option>
               ))}
             </select>
+            {fieldErrors.country ? (
+              <p className="text-sm text-error">{fieldErrors.country}</p>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">
@@ -191,9 +225,7 @@ export function ClientFormDialog({
             />
           </div>
 
-          {error ? (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-error">{error}</p>
-          ) : null}
+          <FormSubmitError message={submitError} />
 
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>

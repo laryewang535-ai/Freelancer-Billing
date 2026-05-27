@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/auth/auth-ui";
+import { FormSubmitError } from "@/components/ui/form-submit-error";
 import { CURRENCIES } from "@/lib/constants/currencies";
 import { INVOICE_TEMPLATES, PAPER_SIZES } from "@/lib/constants/invoice-templates";
 import { getAllowedTemplates } from "@/lib/billing/template-access";
@@ -85,7 +86,9 @@ export function AiInvoiceClient({
 
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [templateError, setTemplateError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const client = clientId ? clientsMap[clientId] ?? null : null;
   const totals = useMemo(
@@ -95,10 +98,10 @@ export function AiInvoiceClient({
 
   function handleTemplateChange(value: InvoiceTemplate) {
     if (!allowedTemplates.includes(value)) {
-      setError("该模板需要 Pro 计划，请前往设置 → 订阅计划升级");
+      setTemplateError("该模板需要 Pro 计划，请前往设置 → 订阅计划升级");
       return;
     }
-    setError(null);
+    setTemplateError(null);
     setTemplate(value);
   }
 
@@ -115,7 +118,7 @@ export function AiInvoiceClient({
 
   async function generate() {
     setLoading(true);
-    setError(null);
+    setGenerateError(null);
     setGenerated(false);
 
     try {
@@ -126,29 +129,30 @@ export function AiInvoiceClient({
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error ?? "生成失败");
+        setGenerateError(json.error ?? "生成失败");
         return;
       }
       applyAiResult(json.data);
     } catch {
-      setError("网络错误");
+      setGenerateError("网络错误");
     } finally {
       setLoading(false);
     }
   }
 
   async function createInvoice() {
+    setSubmitError(null);
+
     if (!clientId) {
-      setError("请选择客户");
+      setSubmitError("请选择客户");
       return;
     }
     if (items.some((i) => !i.description.trim())) {
-      setError("请填写所有行项目描述");
+      setSubmitError("请填写所有行项目描述");
       return;
     }
 
     setCreating(true);
-    setError(null);
 
     try {
       const res = await fetch("/api/invoices", {
@@ -172,13 +176,13 @@ export function AiInvoiceClient({
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error ?? "创建失败");
+        setSubmitError(json.error ?? "创建失败");
         setCreating(false);
         return;
       }
       router.push(`/invoices/${json.data.id}/edit`);
     } catch {
-      setError("网络错误");
+      setSubmitError("网络错误");
       setCreating(false);
     }
   }
@@ -215,23 +219,20 @@ export function AiInvoiceClient({
             className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             placeholder="例如：为 Google 开一张网站开发发票，3000 美元，30 天付款"
           />
-          <div className="mt-3 flex items-center gap-3">
-            <Button onClick={generate} disabled={loading}>
-              {loading ? "生成中..." : "✨ Generate Invoice"}
-            </Button>
-            {generated ? (
-              <span className="text-xs text-emerald-600">
-                ✓ 已根据描述填充下方表单，可继续修改
-              </span>
-            ) : null}
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button onClick={generate} disabled={loading}>
+                {loading ? "生成中..." : "✨ Generate Invoice"}
+              </Button>
+              {generated ? (
+                <span className="text-xs text-emerald-600">
+                  ✓ 已根据描述填充下方表单，可继续修改
+                </span>
+              ) : null}
+            </div>
+            <FormSubmitError message={generateError} />
           </div>
         </div>
-
-        {error ? (
-          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-error">
-            {error}
-          </p>
-        ) : null}
       </div>
 
       {generated ? (
@@ -329,6 +330,7 @@ export function AiInvoiceClient({
                   </div>
                 </div>
               ) : null}
+              <FormSubmitError message={templateError} />
             </section>
 
             {/* 客户与条款 */}
@@ -435,7 +437,9 @@ export function AiInvoiceClient({
               </div>
             </section>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="space-y-2">
+              <FormSubmitError message={submitError} />
+              <div className="flex flex-wrap gap-3">
               <Button onClick={createInvoice} disabled={creating}>
                 {creating ? "创建中..." : "创建 Draft Invoice"}
               </Button>
@@ -446,6 +450,7 @@ export function AiInvoiceClient({
               >
                 重新生成
               </Button>
+              </div>
             </div>
           </div>
 

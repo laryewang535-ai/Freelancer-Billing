@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ClientFormDialog } from "./client-form-dialog";
 import { ClientStatusBadge } from "./client-status-badge";
 import { Button } from "@/components/auth/auth-ui";
@@ -25,11 +25,24 @@ export function ClientsPageClient({
   initialMeta,
 }: ClientsPageClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [items, setItems] = useState(initialItems);
   const [meta, setMeta] = useState(initialMeta);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [needClientHint, setNeedClientHint] = useState(false);
+
+  // 从创建账单跳转而来：提示先建客户并打开新建对话框
+  useEffect(() => {
+    if (searchParams.get("hint") !== "need-client-for-invoice") return;
+
+    setNeedClientHint(true);
+    if (searchParams.get("openCreate") === "1") {
+      setDialogOpen(true);
+    }
+    router.replace("/clients");
+  }, [searchParams, router]);
 
   const fetchClients = useCallback(
     async (page: number, searchTerm: string) => {
@@ -60,6 +73,7 @@ export function ClientsPageClient({
   }
 
   function handleCreated() {
+    setNeedClientHint(false);
     router.refresh();
     fetchClients(1, search.trim());
   }
@@ -75,6 +89,26 @@ export function ClientsPageClient({
         </div>
         <Button onClick={() => setDialogOpen(true)}>+ 新建客户</Button>
       </div>
+
+      {needClientHint ? (
+        <div
+          role="status"
+          className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+        >
+          <p className="font-medium">创建账单前需要先添加客户</p>
+          <p className="mt-1 text-amber-800/90">
+            请填写下方「新建客户」表单完成客户信息。保存成功后，即可前往
+            <Link href="/invoices/new" className="mx-1 font-medium text-primary hover:underline">
+              创建 Invoice
+            </Link>
+            或
+            <Link href="/invoices/ai" className="mx-1 font-medium text-primary hover:underline">
+              AI 生成账单
+            </Link>
+            。
+          </p>
+        </div>
+      ) : null}
 
       <form onSubmit={handleSearch} className="mt-6 flex gap-2">
         <input
