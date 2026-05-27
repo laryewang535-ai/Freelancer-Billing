@@ -54,7 +54,7 @@ export function DashboardClient({
         ].map((item) => (
           <div
             key={item.label}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+            className="app-card p-5 transition hover:shadow-md hover:shadow-slate-200/60"
           >
             <p className="text-sm text-slate-500">{item.label}</p>
             <p className="mt-2 text-2xl font-semibold">{item.value}</p>
@@ -63,7 +63,7 @@ export function DashboardClient({
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="app-card p-6">
           <h2 className="font-semibold text-slate-900">收入趋势</h2>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -78,7 +78,7 @@ export function DashboardClient({
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="app-card p-6">
           <h2 className="font-semibold text-slate-900">Top Clients</h2>
           <ul className="mt-4 space-y-3">
             {topClients.length === 0 ? (
@@ -97,7 +97,7 @@ export function DashboardClient({
         </div>
       </div>
 
-      <div className="mt-8 rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="app-card mt-8 overflow-hidden">
         <h2 className="border-b border-slate-100 px-6 py-4 font-semibold text-slate-900">
           最近 Invoice
         </h2>

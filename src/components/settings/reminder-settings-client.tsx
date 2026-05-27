@@ -92,8 +92,8 @@ export function ReminderSettingsClient({ initialRules }: { initialRules: Rule[] 
         </p>
       ) : null}
 
-      <Button className="mt-6" onClick={save} disabled={loading}>
-        {loading ? "保存中..." : "保存设置"}
+      <Button className="mt-6" onClick={save} loading={loading} loadingText="Saving…">
+        Save settings
       </Button>
     </>
   );

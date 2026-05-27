@@ -228,11 +228,15 @@ export function ClientFormDialog({
           <FormSubmitError message={submitError} />
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              取消
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+              Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "保存中..." : mode === "create" ? "创建" : "保存"}
+            <Button
+              type="submit"
+              loading={loading}
+              loadingText="Saving…"
+            >
+              {mode === "create" ? "Create" : "Save"}
             </Button>
           </div>
         </form>

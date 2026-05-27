@@ -3,9 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ClientFormDialog } from "./client-form-dialog";
+import {
+  ClientFormDialog,
+  type ClientFormValues,
+} from "./client-form-dialog";
 import { ClientStatusBadge } from "./client-status-badge";
 import { Button } from "@/components/auth/auth-ui";
+import { FormSubmitError } from "@/components/ui/form-submit-error";
+import {
+  TableActionButton,
+  TableRowActions,
+} from "@/components/ui/table-row-actions";
+import { TableLoadingOverlay } from "@/components/ui/table-loading-overlay";
 import { getCountryName } from "@/lib/constants/countries";
 import { formatDate, formatMoney } from "@/lib/utils/format";
 import type { ClientListItem } from "@/lib/services/client.service";
@@ -30,7 +39,13 @@ export function ClientsPageClient({
   const [meta, setMeta] = useState(initialMeta);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<{
+    id: string;
+    values: ClientFormValues;
+  } | null>(null);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [needClientHint, setNeedClientHint] = useState(false);
 
   // 从创建账单跳转而来：提示先建客户并打开新建对话框
@@ -39,7 +54,7 @@ export function ClientsPageClient({
 
     setNeedClientHint(true);
     if (searchParams.get("openCreate") === "1") {
-      setDialogOpen(true);
+      setCreateDialogOpen(true);
     }
     router.replace("/clients");
   }, [searchParams, router]);
@@ -72,10 +87,81 @@ export function ClientsPageClient({
     fetchClients(1, search.trim());
   }
 
-  function handleCreated() {
+  function handleListChanged() {
     setNeedClientHint(false);
     router.refresh();
-    fetchClients(1, search.trim());
+    fetchClients(meta.page, search.trim());
+  }
+
+  async function openEditDialog(clientId: string) {
+    setActionError(null);
+    setActionLoadingId(clientId);
+
+    try {
+      const res = await fetch(`/api/clients/${clientId}`);
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        setActionError(json.error ?? "加载客户信息失败");
+        return;
+      }
+
+      const c = json.data as {
+        companyName: string;
+        contactName: string;
+        email: string;
+        country: string;
+        address: string | null;
+        vatNumber: string | null;
+        notes: string | null;
+      };
+
+      setEditingClient({
+        id: clientId,
+        values: {
+          companyName: c.companyName,
+          contactName: c.contactName,
+          email: c.email,
+          country: c.country,
+          address: c.address ?? "",
+          vatNumber: c.vatNumber ?? "",
+          notes: c.notes ?? "",
+        },
+      });
+    } catch {
+      setActionError("网络错误，请稍后重试");
+    } finally {
+      setActionLoadingId(null);
+    }
+  }
+
+  async function handleDeleteClient(client: ClientListItem) {
+    if (
+      !confirm(
+        `Delete client "${client.companyName}"? This cannot be undone. Clients with invoices cannot be deleted.`
+      )
+    ) {
+      return;
+    }
+
+    setActionError(null);
+    setActionLoadingId(client.id);
+
+    try {
+      const res = await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        setActionError(json.error ?? "删除失败");
+        return;
+      }
+
+      handleListChanged();
+    } catch {
+      setActionError("网络错误，请稍后重试");
+    } finally {
+      setActionLoadingId(null);
+    }
   }
 
   return (
@@ -87,8 +173,14 @@ export function ClientsPageClient({
             管理客户信息，共 {meta.total} 个客户
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>+ 新建客户</Button>
+        <Button onClick={() => setCreateDialogOpen(true)}>+ 新建客户</Button>
       </div>
+
+      {actionError ? (
+        <div className="mt-4">
+          <FormSubmitError message={actionError} />
+        </div>
+      ) : null}
 
       {needClientHint ? (
         <div
@@ -116,14 +208,15 @@ export function ClientsPageClient({
           placeholder="搜索公司、联系人或邮箱..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="h-10 flex-1 rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="app-input h-10 flex-1"
         />
-        <Button type="submit" variant="outline" disabled={loading}>
-          搜索
+        <Button type="submit" variant="outline" loading={loading} loadingText="Searching…">
+          Search
         </Button>
       </form>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="app-card relative mt-6 overflow-hidden">
+        {loading ? <TableLoadingOverlay label="Loading clients…" /> : null}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-slate-600">
@@ -136,12 +229,13 @@ export function ClientsPageClient({
                 <th className="px-4 py-3 font-medium text-center">Invoices</th>
                 <th className="px-4 py-3 font-medium">Last Active</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-slate-500">
+                  <td colSpan={9} className="px-4 py-12 text-center text-slate-500">
                     {loading ? "加载中..." : "暂无客户，点击「新建客户」开始添加"}
                   </td>
                 </tr>
@@ -175,6 +269,22 @@ export function ClientsPageClient({
                     </td>
                     <td className="px-4 py-3">
                       <ClientStatusBadge status={client.status} />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <TableRowActions>
+                        <TableActionButton
+                          variant="edit"
+                          label="Edit"
+                          disabled={actionLoadingId === client.id}
+                          onClick={() => openEditDialog(client.id)}
+                        />
+                        <TableActionButton
+                          variant="delete"
+                          label="Delete"
+                          disabled={actionLoadingId === client.id}
+                          onClick={() => handleDeleteClient(client)}
+                        />
+                      </TableRowActions>
                     </td>
                   </tr>
                 ))
@@ -211,10 +321,25 @@ export function ClientsPageClient({
       ) : null}
 
       <ClientFormDialog
-        open={dialogOpen}
+        open={createDialogOpen}
         mode="create"
-        onClose={() => setDialogOpen(false)}
-        onSuccess={handleCreated}
+        onClose={() => setCreateDialogOpen(false)}
+        onSuccess={() => {
+          setCreateDialogOpen(false);
+          handleListChanged();
+        }}
+      />
+
+      <ClientFormDialog
+        open={!!editingClient}
+        mode="edit"
+        clientId={editingClient?.id}
+        initialValues={editingClient?.values}
+        onClose={() => setEditingClient(null)}
+        onSuccess={() => {
+          setEditingClient(null);
+          handleListChanged();
+        }}
       />
     </>
   );

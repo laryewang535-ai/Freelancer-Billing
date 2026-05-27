@@ -191,10 +191,12 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
               ) : (
                 <Button
                   className="mt-4 w-full"
-                  disabled={!status?.billingConfigured || loading !== null}
+                  disabled={!status?.billingConfigured}
+                  loading={loading === planKey}
+                  loadingText="Redirecting…"
                   onClick={() => checkout(planKey)}
                 >
-                  {loading === planKey ? "跳转中..." : `升级到 ${plan.name}`}
+                  Upgrade to {plan.name}
                 </Button>
               )}
             </div>
@@ -204,8 +206,13 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
 
       {currentPlan !== "FREE" && status?.billingConfigured ? (
         <div className="mt-8">
-          <Button variant="outline" onClick={openPortal} disabled={loading !== null}>
-            {loading === "portal" ? "打开中..." : "管理订阅（更换计划 / 取消）"}
+          <Button
+            variant="outline"
+            onClick={openPortal}
+            loading={loading === "portal"}
+            loadingText="Opening…"
+          >
+            Manage subscription
           </Button>
         </div>
       ) : null}

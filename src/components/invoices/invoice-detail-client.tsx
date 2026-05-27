@@ -7,6 +7,7 @@ import { Button } from "@/components/auth/auth-ui";
 import { InvoicePreview, type PreviewClient, type PreviewSeller } from "./invoice-preview";
 import { InvoiceStatusBadge } from "./invoice-status-badge";
 import { InvoiceTimeline } from "./invoice-timeline";
+import { useNavigationLoadingOptional } from "@/components/ui/navigation-loading";
 import {
   SendInvoiceDialog,
   type SendInvoiceClientOption,
@@ -54,6 +55,7 @@ export function InvoiceDetailClient({
   openSendDialog = false,
 }: InvoiceDetailClientProps) {
   const router = useRouter();
+  const nav = useNavigationLoadingOptional();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sendOpen, setSendOpen] = useState(openSendDialog);
@@ -84,8 +86,8 @@ export function InvoiceDetailClient({
 
       if (action === "duplicate") {
         const number = json.data?.invoiceNumber as string | undefined;
+        nav?.startNavigation();
         router.push(number ? `/invoices?duplicated=${encodeURIComponent(number)}` : "/invoices");
-        setLoading(null);
         return;
       } else {
         router.refresh();
@@ -110,6 +112,7 @@ export function InvoiceDetailClient({
         setLoading(null);
         return;
       }
+      nav?.startNavigation();
       router.push("/invoices");
     } catch {
       setError("网络错误");
@@ -159,10 +162,11 @@ export function InvoiceDetailClient({
           {canMarkPaid ? (
             <Button
               variant="secondary"
-              disabled={loading === "markPaid"}
+              loading={loading === "markPaid"}
+              loadingText="Processing…"
               onClick={() => runAction("markPaid")}
             >
-              {loading === "markPaid" ? "处理中..." : "Mark Paid"}
+              Mark Paid
             </Button>
           ) : null}
           <a href={`/api/invoices/${invoice.id}/pdf`} target="_blank" rel="noreferrer">
@@ -177,7 +181,8 @@ export function InvoiceDetailClient({
           </a>
           <Button
             variant="outline"
-            disabled={!!loading}
+            loading={loading === "duplicate"}
+            loadingText="Duplicating…"
             onClick={() => runAction("duplicate")}
           >
             Duplicate
@@ -185,7 +190,8 @@ export function InvoiceDetailClient({
           {canCancel ? (
             <Button
               variant="outline"
-              disabled={loading === "cancel"}
+              loading={loading === "cancel"}
+              loadingText="Cancelling…"
               onClick={() => runAction("cancel")}
             >
               Cancel
@@ -194,7 +200,8 @@ export function InvoiceDetailClient({
           {canDelete ? (
             <Button
               variant="outline"
-              disabled={loading === "delete"}
+              loading={loading === "delete"}
+              loadingText="Deleting…"
               className="border-red-200 text-error hover:bg-red-50"
               onClick={handleDelete}
             >

@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { ClientFormDialog, type ClientFormValues } from "./client-form-dialog";
 import { ClientStatusBadge } from "./client-status-badge";
 import { Button } from "@/components/auth/auth-ui";
+import {
+  TableActionButton,
+  TableRowActions,
+} from "@/components/ui/table-row-actions";
+import { useNavigationLoadingOptional } from "@/components/ui/navigation-loading";
 import { getCountryName } from "@/lib/constants/countries";
 import { formatDate, formatMoney } from "@/lib/utils/format";
 import type { ClientStatus } from "@/lib/services/client.service";
@@ -62,6 +67,7 @@ export function ClientDetailClient({
   payments,
 }: ClientDetailClientProps) {
   const router = useRouter();
+  const nav = useNavigationLoadingOptional();
   const [editOpen, setEditOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +83,11 @@ export function ClientDetailClient({
   };
 
   async function handleDelete() {
-    if (!confirm(`确定删除客户「${client.companyName}」？此操作不可撤销。`)) {
+    if (
+      !confirm(
+        `Delete client "${client.companyName}"? This cannot be undone. Clients with invoices cannot be deleted.`
+      )
+    ) {
       return;
     }
 
@@ -94,6 +104,7 @@ export function ClientDetailClient({
         return;
       }
 
+      nav?.startNavigation();
       router.push("/clients");
       router.refresh();
     } catch {
@@ -120,19 +131,20 @@ export function ClientDetailClient({
           </div>
           <p className="mt-1 text-slate-600">{client.contactName} · {client.email}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setEditOpen(true)}>
-            编辑
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleDelete}
+        <TableRowActions>
+          <TableActionButton
+            variant="edit"
+            label="Edit"
             disabled={deleting}
-            className="border-red-200 text-error hover:bg-red-50"
-          >
-            {deleting ? "删除中..." : "删除"}
-          </Button>
-        </div>
+            onClick={() => setEditOpen(true)}
+          />
+          <TableActionButton
+            variant="delete"
+            label={deleting ? "Deleting…" : "Delete"}
+            disabled={deleting}
+            onClick={handleDelete}
+          />
+        </TableRowActions>
       </div>
 
       {error ? (

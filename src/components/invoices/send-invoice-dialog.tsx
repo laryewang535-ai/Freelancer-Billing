@@ -172,10 +172,10 @@ export function SendInvoiceDialog({
 
         <div className="mt-6 flex justify-end gap-3">
           <Button variant="outline" type="button" onClick={onClose} disabled={loading}>
-            取消
+            Cancel
           </Button>
-          <Button type="button" onClick={handleSend} disabled={loading}>
-            {loading ? "发送中..." : "发送邮件"}
+          <Button type="button" onClick={handleSend} loading={loading} loadingText="Sending…">
+            Send email
           </Button>
         </div>
       </div>

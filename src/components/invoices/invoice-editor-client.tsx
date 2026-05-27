@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/auth/auth-ui";
 import { FormSubmitError } from "@/components/ui/form-submit-error";
+import { useNavigationLoadingOptional } from "@/components/ui/navigation-loading";
 import { CURRENCIES } from "@/lib/constants/currencies";
 import { INVOICE_TEMPLATES, PAPER_SIZES } from "@/lib/constants/invoice-templates";
 import { getAllowedTemplates } from "@/lib/billing/template-access";
@@ -58,6 +59,7 @@ export function InvoiceEditorClient({
   initial,
 }: InvoiceEditorClientProps) {
   const router = useRouter();
+  const nav = useNavigationLoadingOptional();
   const allowedTemplates = getAllowedTemplates(userPlan);
 
   const [clientId, setClientId] = useState(initial?.clientId ?? "");
@@ -158,6 +160,7 @@ export function InvoiceEditorClient({
 
       const id = mode === "create" ? json.data.id : invoiceId;
 
+      nav?.startNavigation();
       if (andSend && id) {
         router.push(`/invoices/${id}?send=1`);
         return;
@@ -359,13 +362,27 @@ export function InvoiceEditorClient({
           <FormSubmitError message={submitError} />
 
           <div className="flex flex-wrap gap-3">
-            <Button onClick={saveDraft} disabled={loading}>
-              {loading ? "保存中..." : "Save Draft"}
+            <Button
+              onClick={saveDraft}
+              loading={loading || (nav?.isNavigating ?? false)}
+              loadingText="Saving…"
+            >
+              Save Draft
             </Button>
-            <Button variant="secondary" onClick={saveAndSend} disabled={loading}>
+            <Button
+              variant="secondary"
+              onClick={saveAndSend}
+              loading={loading || (nav?.isNavigating ?? false)}
+              loadingText="Saving…"
+            >
               Send Invoice
             </Button>
-            <Button variant="outline" type="button" onClick={handleCancel} disabled={loading}>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={handleCancel}
+              disabled={loading || (nav?.isNavigating ?? false)}
+            >
               Cancel
             </Button>
           </div>

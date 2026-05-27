@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/auth/auth-ui";
 import { FormSubmitError } from "@/components/ui/form-submit-error";
+import { useNavigationLoadingOptional } from "@/components/ui/navigation-loading";
 import { CURRENCIES } from "@/lib/constants/currencies";
 import { INVOICE_TEMPLATES, PAPER_SIZES } from "@/lib/constants/invoice-templates";
 import { getAllowedTemplates } from "@/lib/billing/template-access";
@@ -64,6 +65,7 @@ export function AiInvoiceClient({
   userPlan,
 }: AiInvoiceClientProps) {
   const router = useRouter();
+  const nav = useNavigationLoadingOptional();
   const allowedTemplates = getAllowedTemplates(userPlan);
 
   const [prompt, setPrompt] = useState(
@@ -180,6 +182,7 @@ export function AiInvoiceClient({
         setCreating(false);
         return;
       }
+      nav?.startNavigation();
       router.push(`/invoices/${json.data.id}/edit`);
     } catch {
       setSubmitError("网络错误");
@@ -221,8 +224,8 @@ export function AiInvoiceClient({
           />
           <div className="mt-3 space-y-2">
             <div className="flex flex-wrap items-center gap-3">
-              <Button onClick={generate} disabled={loading}>
-                {loading ? "生成中..." : "✨ Generate Invoice"}
+              <Button onClick={generate} loading={loading} loadingText="Generating…">
+                ✨ Generate Invoice
               </Button>
               {generated ? (
                 <span className="text-xs text-emerald-600">
@@ -440,13 +443,18 @@ export function AiInvoiceClient({
             <div className="space-y-2">
               <FormSubmitError message={submitError} />
               <div className="flex flex-wrap gap-3">
-              <Button onClick={createInvoice} disabled={creating}>
-                {creating ? "创建中..." : "创建 Draft Invoice"}
+              <Button
+                onClick={createInvoice}
+                loading={creating || (nav?.isNavigating ?? false)}
+                loadingText="Creating…"
+              >
+                Create Draft Invoice
               </Button>
               <Button
                 variant="outline"
                 onClick={generate}
-                disabled={loading}
+                loading={loading}
+                loadingText="Generating…"
               >
                 重新生成
               </Button>

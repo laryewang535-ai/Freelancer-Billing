@@ -17,7 +17,7 @@ export default auth((req) => {
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 
-  const authPages = ["/login", "/register"];
+  const authPages = ["/login", "/register", "/forgot-password", "/reset-password"];
   const isAuthPage = authPages.includes(pathname);
 
   if (isProtected && !isLoggedIn) {
@@ -43,5 +43,7 @@ export const config = {
     "/settings/:path*",
     "/login",
     "/register",
+    "/forgot-password",
+    "/reset-password",
   ],
 };

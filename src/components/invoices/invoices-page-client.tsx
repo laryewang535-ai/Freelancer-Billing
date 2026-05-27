@@ -4,6 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/auth/auth-ui";
+import { FormSubmitError } from "@/components/ui/form-submit-error";
+import {
+  TableActionButton,
+  TableActionLink,
+  TableRowActions,
+} from "@/components/ui/table-row-actions";
+import { TableLoadingOverlay } from "@/components/ui/table-loading-overlay";
 import { InvoiceStatusBadge } from "./invoice-status-badge";
 import { formatDate, formatMoney } from "@/lib/utils/format";
 import type { InvoiceStatus } from "@prisma/client";
@@ -54,7 +61,13 @@ export function InvoicesPageClient({
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  function canDeleteInvoice(status: InvoiceStatus) {
+    return status === "DRAFT" || status === "CANCELLED";
+  }
 
   useEffect(() => {
     const duplicated = searchParams.get("duplicated");
@@ -97,6 +110,34 @@ export function InvoicesPageClient({
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     fetchInvoices(1, search.trim(), status);
+  }
+
+  async function handleDeleteInvoice(inv: InvoiceListItem) {
+    if (!canDeleteInvoice(inv.status)) return;
+
+    if (!confirm(`Delete invoice ${inv.invoiceNumber}? This cannot be undone.`)) {
+      return;
+    }
+
+    setActionError(null);
+    setActionLoadingId(inv.id);
+
+    try {
+      const res = await fetch(`/api/invoices/${inv.id}`, { method: "DELETE" });
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        setActionError(json.error ?? "删除失败");
+        return;
+      }
+
+      fetchInvoices(meta.page, search.trim(), status);
+      router.refresh();
+    } catch {
+      setActionError("网络错误，请稍后重试");
+    } finally {
+      setActionLoadingId(null);
+    }
   }
 
   return (
@@ -163,10 +204,10 @@ export function InvoicesPageClient({
             placeholder="搜索编号或客户..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 flex-1 rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="app-input h-10 flex-1"
           />
-          <Button type="submit" variant="outline" disabled={loading}>
-            搜索
+          <Button type="submit" variant="outline" loading={loading} loadingText="Searching…">
+            Search
           </Button>
         </form>
         <select
@@ -175,7 +216,7 @@ export function InvoicesPageClient({
             setStatus(e.target.value);
             fetchInvoices(1, search.trim(), e.target.value);
           }}
-          className="h-10 rounded-lg border border-slate-300 px-3 text-sm"
+          className="app-input h-10 w-full sm:w-auto"
         >
           {STATUS_FILTERS.map((f) => (
             <option key={f.value} value={f.value}>
@@ -185,7 +226,14 @@ export function InvoicesPageClient({
         </select>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      {actionError ? (
+        <div className="mt-4">
+          <FormSubmitError message={actionError} />
+        </div>
+      ) : null}
+
+      <div className="app-card relative mt-6 overflow-hidden">
+        {loading ? <TableLoadingOverlay label="Loading invoices…" /> : null}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-slate-600">
@@ -195,7 +243,7 @@ export function InvoicesPageClient({
                 <th className="px-4 py-3 font-medium text-right">Amount</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Due Date</th>
-                <th className="px-4 py-3 font-medium">Action</th>
+                <th className="px-4 py-3 font-medium text-right">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -224,23 +272,29 @@ export function InvoicesPageClient({
                     <td className="px-4 py-3 text-slate-600">
                       {formatDate(inv.dueDate)}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <Link
+                    <td className="px-4 py-3 text-right">
+                      <TableRowActions>
+                        <TableActionLink
                           href={`/invoices/${inv.id}`}
-                          className="text-primary hover:underline"
-                        >
-                          View
-                        </Link>
+                          label="View"
+                          icon="view"
+                        />
                         {inv.status === "DRAFT" ? (
-                          <Link
+                          <TableActionLink
                             href={`/invoices/${inv.id}/edit`}
-                            className="text-primary hover:underline"
-                          >
-                            Edit
-                          </Link>
+                            label="Edit"
+                            icon="edit"
+                          />
                         ) : null}
-                      </div>
+                        {canDeleteInvoice(inv.status) ? (
+                          <TableActionButton
+                            variant="delete"
+                            label="Delete"
+                            disabled={actionLoadingId === inv.id}
+                            onClick={() => handleDeleteInvoice(inv)}
+                          />
+                        ) : null}
+                      </TableRowActions>
                     </td>
                   </tr>
                 ))

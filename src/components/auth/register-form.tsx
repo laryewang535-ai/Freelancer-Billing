@@ -9,6 +9,7 @@ import {
   Button,
   Input,
 } from "./auth-ui";
+import { useNavigationLoading } from "@/components/ui/navigation-loading";
 import { OAuthButtons } from "./oauth-buttons";
 import type { OAuthConfig } from "@/lib/auth/providers";
 
@@ -18,6 +19,7 @@ type RegisterFormProps = {
 
 export function RegisterForm({ oauth }: RegisterFormProps) {
   const router = useRouter();
+  const { isNavigating, startNavigation } = useNavigationLoading();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,12 +48,15 @@ export function RegisterForm({ oauth }: RegisterFormProps) {
         return;
       }
 
+      startNavigation();
       router.push("/login?registered=1");
     } catch {
       setError("网络错误，请稍后重试");
       setLoading(false);
     }
   }
+
+  const submitting = loading || isNavigating;
 
   return (
     <AuthCard title="创建账户" subtitle="开始管理你的发票与收款">
@@ -100,8 +105,13 @@ export function RegisterForm({ oauth }: RegisterFormProps) {
           </p>
         ) : null}
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "注册中..." : "Register"}
+        <Button
+          type="submit"
+          className="w-full"
+          loading={submitting}
+          loadingText="Creating account…"
+        >
+          Register
         </Button>
       </form>
 
