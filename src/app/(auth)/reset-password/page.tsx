@@ -11,7 +11,7 @@ export default async function ResetPasswordPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-12">
-      <Suspense fallback={<div className="text-sm text-slate-500">加载中...</div>}>
+      <Suspense fallback={<div className="text-sm text-slate-500">Loading...</div>}>
         <ResetPasswordForm />
       </Suspense>
     </main>

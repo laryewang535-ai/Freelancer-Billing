@@ -94,7 +94,7 @@ export function InvoiceEditorClient({
 
   function handleTemplateChange(value: InvoiceTemplate) {
     if (!allowedTemplates.includes(value)) {
-      setTemplateError("该模板需要 Pro 计划，请前往设置 → 订阅计划升级");
+      setTemplateError("This template requires Pro. Upgrade in Settings → Billing.");
       return;
     }
     setTemplateError(null);
@@ -117,12 +117,12 @@ export function InvoiceEditorClient({
     setSubmitError(null);
 
     if (!clientId) {
-      setSubmitError("请选择客户");
+      setSubmitError("Please select a client");
       return;
     }
 
     if (items.some((i) => !i.description.trim())) {
-      setSubmitError("请填写所有行项目描述");
+      setSubmitError("Please fill in every line item description");
       return;
     }
 
@@ -153,7 +153,7 @@ export function InvoiceEditorClient({
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setSubmitError(json.error ?? "保存失败");
+        setSubmitError(json.error ?? "Failed to save");
         setLoading(false);
         return;
       }
@@ -169,7 +169,7 @@ export function InvoiceEditorClient({
       router.push(`/invoices/${id}`);
       router.refresh();
     } catch {
-      setSubmitError("网络错误");
+      setSubmitError("Network error");
       setLoading(false);
     }
   }
@@ -178,18 +178,18 @@ export function InvoiceEditorClient({
     <div>
       <div className="mb-6">
         <Link href="/invoices" className="text-sm text-primary hover:underline">
-          ← 返回 Invoice 列表
+          ← Back to invoices
         </Link>
       </div>
 
       <h1 className="text-2xl font-semibold text-slate-900">
-        {mode === "create" ? "创建 Invoice" : "编辑 Invoice"}
+        {mode === "create" ? "create an invoice" : "Edit invoice"}
       </h1>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         <div className="space-y-6">
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="font-medium text-slate-900">模板与格式</h2>
+            <h2 className="font-medium text-slate-900">Template and format</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {INVOICE_TEMPLATES.map((t) => {
                 const locked = !allowedTemplates.includes(t.value);
@@ -218,7 +218,7 @@ export function InvoiceEditorClient({
               })}
             </div>
             <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-700">纸张规格</label>
+              <label className="block text-sm font-medium text-slate-700">Paper size</label>
               <select
                 value={paperSize}
                 onChange={(e) => setPaperSize(e.target.value as PaperSize)}
@@ -234,7 +234,7 @@ export function InvoiceEditorClient({
             {template === "BRANDING" ? (
               <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">品牌主色</label>
+                  <label className="block text-sm font-medium text-slate-700">Brand color</label>
                   <div className="mt-1 flex items-center gap-3">
                     <input
                       type="color"
@@ -259,7 +259,7 @@ export function InvoiceEditorClient({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">页脚签名</label>
+                  <label className="block text-sm font-medium text-slate-700">Footer signature</label>
                   <input
                     value={footerSignature}
                     onChange={(e) => setFooterSignature(e.target.value)}

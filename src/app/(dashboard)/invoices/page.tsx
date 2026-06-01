@@ -11,7 +11,7 @@ export default async function InvoicesPage() {
   const result = await listInvoices(session.user.id);
 
   return (
-    <Suspense fallback={<div className="text-sm text-slate-500">加载中...</div>}>
+    <Suspense fallback={<div className="text-sm text-slate-500">Loading...</div>}>
       <InvoicesPageClient
         initialItems={result.items}
         initialMeta={result.meta}

@@ -10,17 +10,17 @@ export async function POST(request: NextRequest) {
     const parsed = forgotPasswordSchema.safeParse(body);
 
     if (!parsed.success) {
-      return fail(parsed.error.issues[0]?.message ?? "参数无效", 400);
+      return fail(parsed.error.issues[0]?.message ?? "Invalid parameters", 400);
     }
 
     await requestPasswordReset(parsed.data.email);
 
     return ok({
       message:
-        "若该邮箱已注册且使用密码登录，您将收到重置邮件，请查收（含垃圾邮件文件夹）。",
+        "If this email is registered with password login, you will receive a reset email. Please check your inbox and spam folder.",
     });
   } catch (error) {
     console.error("[forgot-password]", error);
-    return fail("发送失败，请稍后重试", 500);
+    return fail("Failed to send. Please try again later.", 500);
   }
 }

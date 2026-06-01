@@ -9,30 +9,30 @@ export const INVOICE_TEMPLATES: Array<{
   {
     value: "STANDARD",
     label: "Standard",
-    description: "经典蓝调，适合大多数场景",
+    description: "Classic blue layout for most invoices",
     proOnly: false,
   },
   {
     value: "MINIMAL",
     label: "Minimal",
-    description: "极简黑白，干净专业",
+    description: "Minimal black-and-white layout",
     proOnly: true,
   },
   {
     value: "CORPORATE",
     label: "Corporate",
-    description: "深色页眉，企业风格",
+    description: "Dark header with a corporate feel",
     proOnly: true,
   },
   {
     value: "BRANDING",
     label: "Branding",
-    description: "自定义品牌色与 Logo",
+    description: "Custom brand color and logo",
     proOnly: true,
   },
 ];
 
 export const PAPER_SIZES = [
-  { value: "A4" as const, label: "A4（国际）" },
-  { value: "LETTER" as const, label: "Letter（美国）" },
+  { value: "A4" as const, label: "A4 (International)" },
+  { value: "LETTER" as const, label: "Letter (US)" },
 ];

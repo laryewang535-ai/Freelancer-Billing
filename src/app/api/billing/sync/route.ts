@@ -6,7 +6,7 @@ import { syncSubscriptionForUser } from "@/lib/services/billing.service";
 /** 支付成功后同步 Lemon Squeezy 订阅 */
 export async function POST(request: NextRequest) {
   const user = await getSessionUser();
-  if (!user) return fail("未登录", 401, "UNAUTHORIZED");
+  if (!user) return fail("Unauthorized", 401, "UNAUTHORIZED");
 
   let checkoutId: string | undefined;
   try {
@@ -23,9 +23,9 @@ export async function POST(request: NextRequest) {
     return ok(status);
   } catch (error) {
     if (error instanceof Error && error.message === "LEMONSQUEEZY_NOT_CONFIGURED") {
-      return fail("Lemon Squeezy 未配置", 503, "LEMONSQUEEZY_NOT_CONFIGURED");
+      return fail("Lemon Squeezy is not configured", 503, "LEMONSQUEEZY_NOT_CONFIGURED");
     }
     console.error("[billing sync]", error);
-    return fail("同步订阅失败", 500);
+    return fail("Failed to sync subscription", 500);
   }
 }

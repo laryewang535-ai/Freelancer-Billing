@@ -1,6 +1,5 @@
 import { formatDate, formatMoney } from "@/lib/utils/format";
 
-/** 默认 Invoice 邮件正文（纯文本，用户可在发送前编辑） */
 export function buildDefaultInvoiceMessage(params: {
   contactName: string;
   invoiceNumber: string;
@@ -12,17 +11,16 @@ export function buildDefaultInvoiceMessage(params: {
   const due = formatDate(params.dueDate);
   const amount = formatMoney(params.totalAmount, params.currency);
 
-  return `您好 ${params.contactName}，
+  return `Hi ${params.contactName},
 
-附件是本账单（${params.invoiceNumber}），金额 ${amount}，到期日 ${due}。
+Please find attached invoice ${params.invoiceNumber} for ${amount}, due ${due}.
 
-请查收附件 PDF。如有疑问，欢迎随时联系我。
+Let me know if you have any questions.
 
-祝好，
+Best,
 ${params.sellerName}`;
 }
 
-/** 将用户正文转为 HTML 邮件 */
 export function buildInvoiceEmailHtml(params: {
   invoiceNumber: string;
   clientName: string;

@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   return (
     <>
       <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
-      <p className="mt-2 text-slate-600">收入与 Invoice 概览</p>
+      <p className="mt-2 text-slate-600">Revenue and invoice overview</p>
       <div className="mt-8">
         <DashboardClient
           overview={{

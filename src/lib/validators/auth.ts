@@ -1,34 +1,34 @@
 import { z } from "zod";
 
 export const registerSchema = z.object({
-  name: z.string().trim().min(1, "姓名不能为空").max(100),
-  email: z.string().trim().email("邮箱格式不正确"),
+  name: z.string().trim().min(1, "Name is required").max(100),
+  email: z.string().trim().email("Invalid email address"),
   password: z
     .string()
-    .min(8, "密码至少 8 位")
-    .max(72, "密码过长")
-    .regex(/[A-Za-z]/, "密码需包含字母")
-    .regex(/[0-9]/, "密码需包含数字"),
+    .min(8, "Password must be at least 8 characters")
+    .max(72, "Password is too long")
+    .regex(/[A-Za-z]/, "Password must include a letter")
+    .regex(/[0-9]/, "Password must include a number"),
 });
 
 export const loginSchema = z.object({
-  email: z.string().trim().email("邮箱格式不正确"),
-  password: z.string().min(1, "请输入密码"),
+  email: z.string().trim().email("Invalid email address"),
+  password: z.string().min(1, "Please enter your password"),
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().trim().email("邮箱格式不正确"),
+  email: z.string().trim().email("Invalid email address"),
 });
 
 /** 与注册密码规则一致 */
 export const resetPasswordSchema = z.object({
-  token: z.string().min(1, "重置链接无效"),
+  token: z.string().min(1, "Invalid reset link"),
   password: z
     .string()
-    .min(8, "密码至少 8 位")
-    .max(72, "密码过长")
-    .regex(/[A-Za-z]/, "密码需包含字母")
-    .regex(/[0-9]/, "密码需包含数字"),
+    .min(8, "Password must be at least 8 characters")
+    .max(72, "Password is too long")
+    .regex(/[A-Za-z]/, "Password must include a letter")
+    .regex(/[0-9]/, "Password must include a number"),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

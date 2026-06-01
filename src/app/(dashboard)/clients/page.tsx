@@ -11,7 +11,7 @@ export default async function ClientsPage() {
   const result = await listClients(session.user.id);
 
   return (
-    <Suspense fallback={<p className="text-sm text-slate-500">加载中...</p>}>
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading...</p>}>
       <ClientsPageClient
         initialItems={result.items}
         initialMeta={result.meta}

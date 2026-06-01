@@ -23,7 +23,7 @@ export function PaymentsPageClient({
   return (
     <>
       <h1 className="text-2xl font-semibold text-slate-900">Payments</h1>
-      <p className="mt-1 text-sm text-slate-600">收款记录</p>
+      <p className="mt-1 text-sm text-slate-600">Payment records</p>
 
       <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="min-w-full text-sm">
@@ -41,7 +41,7 @@ export function PaymentsPageClient({
             {initialItems.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
-                  暂无收款记录。在 Invoice 详情页 Mark Paid 即可记录。
+                  No payment records yet. Use Mark Paid on an invoice detail page to record one.
                 </td>
               </tr>
             ) : (

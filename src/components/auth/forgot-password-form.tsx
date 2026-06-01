@@ -31,7 +31,7 @@ export function ForgotPasswordForm() {
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setSubmitError(json.error ?? "发送失败");
+        setSubmitError(json.error ?? "Failed to send");
         setLoading(false);
         return;
       }
@@ -39,14 +39,14 @@ export function ForgotPasswordForm() {
       setSuccess(json.data.message);
       setEmail("");
     } catch {
-      setSubmitError("网络错误，请稍后重试");
+      setSubmitError("Network error. Please try again shortly.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <AuthCard title="忘记密码" subtitle="输入注册邮箱，我们将发送重置链接">
+    <AuthCard title="Forgot password" subtitle="Enter your email and we will send a reset link.">
       {success ? (
         <p className="mb-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-success">
           {success}
@@ -77,12 +77,12 @@ export function ForgotPasswordForm() {
 
       <p className="mt-4 text-center text-sm text-slate-600">
         <Link href="/login" className="font-medium text-primary hover:underline">
-          返回登录
+          Back to login
         </Link>
       </p>
 
       <AuthFooterLink
-        text="还没有账户？"
+        text="Don't have an account?"
         linkText="Register"
         href="/register"
       />

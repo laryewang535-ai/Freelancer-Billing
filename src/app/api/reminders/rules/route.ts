@@ -23,7 +23,7 @@ const updateSchema = z.object({
 /** 获取催款规则 */
 export async function GET() {
   const user = await getSessionUser();
-  if (!user) return fail("未登录", 401, "UNAUTHORIZED");
+  if (!user) return fail("Unauthorized", 401, "UNAUTHORIZED");
 
   const rules = await getReminderRules(user.id);
   return ok(rules);
@@ -32,12 +32,12 @@ export async function GET() {
 /** 更新催款规则 */
 export async function PATCH(request: NextRequest) {
   const user = await getSessionUser();
-  if (!user) return fail("未登录", 401, "UNAUTHORIZED");
+  if (!user) return fail("Unauthorized", 401, "UNAUTHORIZED");
 
   try {
     const body = await request.json();
     const parsed = updateSchema.safeParse(body);
-    if (!parsed.success) return fail("参数无效", 400);
+    if (!parsed.success) return fail("Invalid parameters", 400);
 
     const rules = await updateReminderRules(
       user.id,
@@ -46,9 +46,9 @@ export async function PATCH(request: NextRequest) {
     return ok(rules);
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("FEATURE_REQUIRES_PRO")) {
-      return fail("自动催款需要 Pro 计划", 403, "FEATURE_REQUIRES_PRO");
+      return fail("Automatic reminders require Pro", 403, "FEATURE_REQUIRES_PRO");
     }
     console.error("[reminder rules]", error);
-    return fail("更新失败", 500);
+    return fail("Update failed", 500);
   }
 }

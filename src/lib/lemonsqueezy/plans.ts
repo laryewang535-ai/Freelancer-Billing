@@ -13,24 +13,24 @@ export const PLAN_CATALOG: Record<
 > = {
   PRO: {
     name: "Pro",
-    priceLabel: "$8.99/月",
+    priceLabel: "$8.99/month",
     variantEnv: "LEMONSQUEEZY_VARIANT_PRO",
     features: [
-      "无限 Invoice",
-      "AI 生成发票",
-      "自动催款",
-      "数据统计",
-      "全部模板",
+      "Unlimited invoices",
+      "AI invoice generation",
+      "Automatic reminders",
+      "Analytics",
+      "All templates",
     ],
   },
   BUSINESS: {
     name: "Business",
-    priceLabel: "$19.9/月",
+    priceLabel: "$19.90/month",
     variantEnv: "LEMONSQUEEZY_VARIANT_BUSINESS",
     features: [
-      "Pro 全部功能",
-      "团队协作（即将推出）",
-      "API 接口（即将推出）",
+      "Everything in Pro",
+      "Team collaboration (coming soon)",
+      "API access (coming soon)",
     ],
   },
 };

@@ -12,12 +12,12 @@ const schema = z.object({
 /** 创建 Lemon Squeezy Checkout 跳转链接 */
 export async function POST(request: NextRequest) {
   const user = await getSessionUser();
-  if (!user) return fail("未登录", 401, "UNAUTHORIZED");
+  if (!user) return fail("Unauthorized", 401, "UNAUTHORIZED");
 
   try {
     const body = await request.json();
     const parsed = schema.safeParse(body);
-    if (!parsed.success) return fail("参数无效", 400);
+    if (!parsed.success) return fail("Invalid parameters", 400);
 
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
@@ -35,12 +35,12 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error) {
       const map: Record<string, [string, number, string]> = {
         LEMONSQUEEZY_NOT_CONFIGURED: [
-          "Lemon Squeezy 未配置，请在 .env.local 设置 API Key、Store ID 和 Variant ID",
+          "Lemon Squeezy is not configured. Set the API key, Store ID, and Variant IDs in .env.local.",
           503,
           "LEMONSQUEEZY_NOT_CONFIGURED",
         ],
         LEMONSQUEEZY_VARIANT_NOT_CONFIGURED: [
-          "Lemon Squeezy Variant ID 未配置",
+          "Lemon Squeezy Variant ID is not configured",
           503,
           "LEMONSQUEEZY_VARIANT_NOT_CONFIGURED",
         ],
@@ -49,6 +49,6 @@ export async function POST(request: NextRequest) {
       if (mapped) return fail(mapped[0], mapped[1], mapped[2]);
     }
     console.error("[billing checkout]", error);
-    return fail("创建支付链接失败", 500);
+    return fail("Failed to create checkout link", 500);
   }
 }

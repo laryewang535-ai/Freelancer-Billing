@@ -48,7 +48,7 @@ export function ClientsPageClient({
   const [actionError, setActionError] = useState<string | null>(null);
   const [needClientHint, setNeedClientHint] = useState(false);
 
-  // 从创建账单跳转而来：提示先建客户并打开新建对话框
+  // Redirected from invoice creation: prompt for a client first and open the dialog.
   useEffect(() => {
     if (searchParams.get("hint") !== "need-client-for-invoice") return;
 
@@ -102,7 +102,7 @@ export function ClientsPageClient({
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setActionError(json.error ?? "加载客户信息失败");
+        setActionError(json.error ?? "Failed to load client details");
         return;
       }
 
@@ -129,7 +129,7 @@ export function ClientsPageClient({
         },
       });
     } catch {
-      setActionError("网络错误，请稍后重试");
+      setActionError("Network error. Please try again shortly.");
     } finally {
       setActionLoadingId(null);
     }
@@ -152,13 +152,13 @@ export function ClientsPageClient({
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setActionError(json.error ?? "删除失败");
+        setActionError(json.error ?? "Failed to delete");
         return;
       }
 
       handleListChanged();
     } catch {
-      setActionError("网络错误，请稍后重试");
+      setActionError("Network error. Please try again shortly.");
     } finally {
       setActionLoadingId(null);
     }
@@ -170,10 +170,10 @@ export function ClientsPageClient({
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Clients</h1>
           <p className="mt-1 text-sm text-slate-600">
-            管理客户信息，共 {meta.total} 个客户
+            Manage client records, {meta.total} clients total
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>+ 新建客户</Button>
+        <Button onClick={() => setCreateDialogOpen(true)}>+ New client</Button>
       </div>
 
       {actionError ? (
@@ -187,15 +187,15 @@ export function ClientsPageClient({
           role="status"
           className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
         >
-          <p className="font-medium">创建账单前需要先添加客户</p>
+          <p className="font-medium">Add a client before creating an invoice</p>
           <p className="mt-1 text-amber-800/90">
-            请填写下方「新建客户」表单完成客户信息。保存成功后，即可前往
+            Complete the new client form below. After saving, you can go to
             <Link href="/invoices/new" className="mx-1 font-medium text-primary hover:underline">
-              创建 Invoice
+              create an invoice
             </Link>
-            或
+            or
             <Link href="/invoices/ai" className="mx-1 font-medium text-primary hover:underline">
-              AI 生成账单
+              generate an invoice with AI
             </Link>
             。
           </p>
@@ -205,7 +205,7 @@ export function ClientsPageClient({
       <form onSubmit={handleSearch} className="mt-6 flex gap-2">
         <input
           type="search"
-          placeholder="搜索公司、联系人或邮箱..."
+          placeholder="Search company, contact, or email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="app-input h-10 flex-1"
@@ -236,7 +236,7 @@ export function ClientsPageClient({
               {items.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-slate-500">
-                    {loading ? "加载中..." : "暂无客户，点击「新建客户」开始添加"}
+                    {loading ? "Loading..." : "No clients yet. Click New client to add one."}
                   </td>
                 </tr>
               ) : (
@@ -297,7 +297,7 @@ export function ClientsPageClient({
       {meta.totalPages > 1 ? (
         <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
           <span>
-            第 {meta.page} / {meta.totalPages} 页
+            Page {meta.page} of {meta.totalPages}
           </span>
           <div className="flex gap-2">
             <Button
@@ -306,7 +306,7 @@ export function ClientsPageClient({
               disabled={meta.page <= 1 || loading}
               onClick={() => fetchClients(meta.page - 1, search.trim())}
             >
-              上一页
+              Previous
             </Button>
             <Button
               variant="outline"
@@ -314,7 +314,7 @@ export function ClientsPageClient({
               disabled={meta.page >= meta.totalPages || loading}
               onClick={() => fetchClients(meta.page + 1, search.trim())}
             >
-              下一页
+              Next
             </Button>
           </div>
         </div>

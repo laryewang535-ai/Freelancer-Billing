@@ -47,7 +47,7 @@ export function LoginForm({ oauth }: LoginFormProps) {
 
     if (result?.error) {
       setLoading(false);
-      setError("邮箱或密码错误");
+      setError("Invalid email or password");
       return;
     }
 
@@ -61,16 +61,16 @@ export function LoginForm({ oauth }: LoginFormProps) {
   return (
     <AuthCard
       title="Freelancer Billing Assistant"
-      subtitle="登录以管理发票与客户"
+      subtitle="Sign in to manage invoices and clients"
     >
       {registered ? (
         <p className="mb-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-success">
-          注册成功，请登录。
+          Registration successful. Please sign in.
         </p>
       ) : null}
       {reset ? (
         <p className="mb-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-success">
-          密码已重置，请使用新密码登录。
+          Your password has been reset. Sign in with your new password.
         </p>
       ) : null}
 
@@ -93,7 +93,7 @@ export function LoginForm({ oauth }: LoginFormProps) {
               href="/forgot-password"
               className="text-xs font-medium text-primary hover:underline"
             >
-              忘记密码？
+              Forgot password?
             </a>
           </div>
           <input

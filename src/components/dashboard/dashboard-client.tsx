@@ -47,10 +47,10 @@ export function DashboardClient({
     <>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "本月收入", value: formatMoney(overview.revenueThisMonth) },
-          { label: "待收款", value: formatMoney(overview.unpaidTotal) },
-          { label: "Invoice 数", value: String(overview.invoiceCount) },
-          { label: "逾期数", value: String(overview.overdueCount) },
+          { label: "Revenue this month", value: formatMoney(overview.revenueThisMonth) },
+          { label: "Outstanding", value: formatMoney(overview.unpaidTotal) },
+          { label: "Invoices", value: String(overview.invoiceCount) },
+          { label: "Overdue", value: String(overview.overdueCount) },
         ].map((item) => (
           <div
             key={item.label}
@@ -64,7 +64,7 @@ export function DashboardClient({
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="app-card p-6">
-          <h2 className="font-semibold text-slate-900">收入趋势</h2>
+          <h2 className="font-semibold text-slate-900">Revenue trend</h2>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueTrend}>
@@ -82,7 +82,7 @@ export function DashboardClient({
           <h2 className="font-semibold text-slate-900">Top Clients</h2>
           <ul className="mt-4 space-y-3">
             {topClients.length === 0 ? (
-              <li className="text-sm text-slate-500">暂无数据</li>
+              <li className="text-sm text-slate-500">No data yet</li>
             ) : (
               topClients.slice(0, 5).map((c) => (
                 <li key={c.companyName} className="flex justify-between text-sm">
@@ -99,7 +99,7 @@ export function DashboardClient({
 
       <div className="app-card mt-8 overflow-hidden">
         <h2 className="border-b border-slate-100 px-6 py-4 font-semibold text-slate-900">
-          最近 Invoice
+          Recent invoices
         </h2>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">

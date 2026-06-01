@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 
 const ITEMS = [
-  { href: "/settings/billing", label: "订阅计划" },
-  { href: "/settings/reminders", label: "催款设置" },
+  { href: "/settings/billing", label: "Billing" },
+  { href: "/settings/reminders", label: "Reminder settings" },
 ];
 
 export function SettingsNav() {

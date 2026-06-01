@@ -12,11 +12,11 @@ const querySchema = z.object({
 /** 收款记录列表 */
 export async function GET(request: NextRequest) {
   const user = await getSessionUser();
-  if (!user) return fail("未登录", 401, "UNAUTHORIZED");
+  if (!user) return fail("Unauthorized", 401, "UNAUTHORIZED");
 
   const params = Object.fromEntries(request.nextUrl.searchParams);
   const parsed = querySchema.safeParse(params);
-  if (!parsed.success) return fail("参数无效", 400);
+  if (!parsed.success) return fail("Invalid parameters", 400);
 
   const result = await listPayments(user.id, parsed.data);
   return ok(result.items, { meta: result.meta });

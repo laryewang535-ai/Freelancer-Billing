@@ -8,7 +8,7 @@ export default async function BillingSettingsPage() {
   if (!session?.user) redirect("/login");
 
   return (
-    <Suspense fallback={<p className="text-sm text-slate-500">加载中...</p>}>
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading...</p>}>
       <BillingSettingsClient initialPlan={session.user.plan ?? "FREE"} />
     </Suspense>
   );

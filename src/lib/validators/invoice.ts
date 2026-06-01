@@ -2,16 +2,16 @@ import { z } from "zod";
 import { isValidCurrency } from "@/lib/constants/currencies";
 
 export const invoiceItemSchema = z.object({
-  description: z.string().trim().min(1, "服务描述不能为空").max(2000),
-  quantity: z.coerce.number().positive("数量必须大于 0"),
-  unitPrice: z.coerce.number().min(0, "单价不能为负"),
+  description: z.string().trim().min(1, "Service description is required").max(2000),
+  quantity: z.coerce.number().positive("Quantity must be greater than 0"),
+  unitPrice: z.coerce.number().min(0, "Unit price cannot be negative"),
 });
 
 export const createInvoiceSchema = z.object({
-  clientId: z.string().min(1, "请选择客户"),
-  currency: z.string().refine(isValidCurrency, "不支持的币种"),
+  clientId: z.string().min(1, "Please select a client"),
+  currency: z.string().refine(isValidCurrency, "Unsupported currency"),
   taxRatePercent: z.coerce.number().min(0).max(100).default(0),
-  dueDate: z.coerce.date({ message: "请选择到期日" }),
+  dueDate: z.coerce.date({ message: "Please select a due date" }),
   invoiceDate: z.coerce.date().optional(),
   paymentTerms: z.string().trim().max(100).optional().nullable(),
   notes: z.string().trim().max(5000).optional().nullable(),
@@ -22,12 +22,12 @@ export const createInvoiceSchema = z.object({
   paperSize: z.enum(["A4", "LETTER"]).optional().default("A4"),
   brandPrimaryColor: z
     .string()
-    .regex(/^#[0-9A-Fa-f]{6}$/, "品牌色格式应为 #RRGGBB")
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Brand color must use #RRGGBB format")
     .optional()
     .nullable(),
   brandLogoUrl: z.string().trim().max(500).optional().nullable(),
   footerSignature: z.string().trim().max(500).optional().nullable(),
-  items: z.array(invoiceItemSchema).min(1, "至少添加一个行项目"),
+  items: z.array(invoiceItemSchema).min(1, "Add at least one line item"),
 });
 
 export const updateInvoiceSchema = createInvoiceSchema.partial();

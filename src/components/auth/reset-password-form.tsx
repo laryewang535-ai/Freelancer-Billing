@@ -25,19 +25,19 @@ export function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <AuthCard title="链接无效" subtitle="请从邮件中打开完整链接，或重新申请重置">
+      <AuthCard title="Invalid link" subtitle="Open the full link from your email, or request a new reset link.">
         <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          缺少重置令牌。链接可能已损坏或已被使用。
+          The reset token is missing. The link may be broken or already used.
         </p>
         <p className="mt-6 text-center">
           <Link
             href="/forgot-password"
             className="text-sm font-medium text-primary hover:underline"
           >
-            重新申请重置密码
+            Request a new password reset
           </Link>
         </p>
-        <AuthFooterLink text="返回" linkText="Login" href="/login" />
+        <AuthFooterLink text="Back to" linkText="Login" href="/login" />
       </AuthCard>
     );
   }
@@ -47,7 +47,7 @@ export function ResetPasswordForm() {
     setSubmitError(null);
 
     if (password !== confirmPassword) {
-      setSubmitError("两次输入的密码不一致");
+      setSubmitError("Passwords do not match");
       return;
     }
 
@@ -62,7 +62,7 @@ export function ResetPasswordForm() {
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setSubmitError(json.error ?? "重置失败");
+        setSubmitError(json.error ?? "Password reset failed");
         setLoading(false);
         return;
       }
@@ -70,7 +70,7 @@ export function ResetPasswordForm() {
       startNavigation();
       router.push("/login?reset=1");
     } catch {
-      setSubmitError("网络错误，请稍后重试");
+      setSubmitError("Network error. Please try again shortly.");
       setLoading(false);
     }
   }
@@ -78,10 +78,10 @@ export function ResetPasswordForm() {
   const submitting = loading || isNavigating;
 
   return (
-    <AuthCard title="设置新密码" subtitle="请输入新的登录密码">
+    <AuthCard title="Set a new password" subtitle="Enter your new sign-in password.">
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <Input
-          label="新密码"
+          label="New password"
           name="password"
           type="password"
           autoComplete="new-password"
@@ -89,14 +89,14 @@ export function ResetPasswordForm() {
           onChange={(e) => setPassword(e.target.value)}
         />
         <Input
-          label="确认新密码"
+          label="Confirm new password"
           name="confirmPassword"
           type="password"
           autoComplete="new-password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
-        <p className="text-xs text-slate-500">密码至少 8 位，需包含字母和数字。</p>
+        <p className="text-xs text-slate-500">Password must be at least 8 characters and include letters and numbers.</p>
 
         <FormSubmitError message={submitError} />
 
@@ -110,7 +110,7 @@ export function ResetPasswordForm() {
         </Button>
       </form>
 
-      <AuthFooterLink text="想起密码了？" linkText="Login" href="/login" />
+      <AuthFooterLink text="Remembered your password?" linkText="Login" href="/login" />
     </AuthCard>
   );
 }

@@ -99,7 +99,7 @@ export function ClientDetailClient({
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setError(json.error ?? "删除失败");
+        setError(json.error ?? "Failed to delete");
         setDeleting(false);
         return;
       }
@@ -108,7 +108,7 @@ export function ClientDetailClient({
       router.push("/clients");
       router.refresh();
     } catch {
-      setError("网络错误");
+      setError("Network error");
       setDeleting(false);
     }
   }
@@ -117,7 +117,7 @@ export function ClientDetailClient({
     <>
       <div className="mb-6">
         <Link href="/clients" className="text-sm text-primary hover:underline">
-          ← 返回客户列表
+          ← Back to clients
         </Link>
       </div>
 
@@ -153,11 +153,11 @@ export function ClientDetailClient({
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "总收入", value: formatMoney(client.totalRevenue) },
-          { label: "未付款", value: formatMoney(client.unpaidAmount) },
-          { label: "Invoice 数", value: String(client.invoiceCount) },
+          { label: "Total revenue", value: formatMoney(client.totalRevenue) },
+          { label: "Unpaid", value: formatMoney(client.unpaidAmount) },
+          { label: "Invoices", value: String(client.invoiceCount) },
           {
-            label: "最近合作",
+            label: "Last collaboration",
             value: formatDate(client.lastCollaborationAt ?? client.createdAt),
           },
         ].map((item) => (
@@ -173,7 +173,7 @@ export function ClientDetailClient({
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-1">
-          <h2 className="font-semibold text-slate-900">客户信息</h2>
+          <h2 className="font-semibold text-slate-900">Client information</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <div>
               <dt className="text-slate-500">Country</dt>
@@ -203,10 +203,10 @@ export function ClientDetailClient({
         <div className="space-y-6 lg:col-span-2">
           <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
             <h2 className="border-b border-slate-100 px-6 py-4 font-semibold text-slate-900">
-              历史 Invoice
+              Invoice history
             </h2>
             {invoices.length === 0 ? (
-              <p className="px-6 py-8 text-sm text-slate-500">暂无 Invoice 记录</p>
+              <p className="px-6 py-8 text-sm text-slate-500">No invoice records yet</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
@@ -247,10 +247,10 @@ export function ClientDetailClient({
 
           <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
             <h2 className="border-b border-slate-100 px-6 py-4 font-semibold text-slate-900">
-              收款记录
+              Payment records
             </h2>
             {payments.length === 0 ? (
-              <p className="px-6 py-8 text-sm text-slate-500">暂无收款记录</p>
+              <p className="px-6 py-8 text-sm text-slate-500">No payment records yet</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">

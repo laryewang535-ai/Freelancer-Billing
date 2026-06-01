@@ -46,17 +46,17 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
             setStatus(json.data);
             const syncedPlan = json.data?.plan as Plan | undefined;
             if (syncedPlan && syncedPlan !== "FREE") {
-              setMessage(`订阅成功！当前计划：${PLAN_LABELS[syncedPlan]}`);
+              setMessage(`Subscription active. Current plan: ${PLAN_LABELS[syncedPlan]}`);
             } else {
-              setMessage("支付已完成，计划同步中…请稍后刷新或点击同步。");
+              setMessage("Payment completed. Your plan is syncing; refresh shortly or sync again.");
             }
             updateSession({ plan: syncedPlan });
           } else {
-            setMessage("支付已完成，计划同步中…请稍后刷新。");
+            setMessage("Payment completed. Your plan is syncing; please refresh shortly.");
           }
         })
         .catch(() => {
-          setMessage("支付已完成，请刷新页面查看计划。");
+          setMessage("Payment completed. Please refresh to see your plan.");
         });
     }
   }, [searchParams, updateSession]);
@@ -83,7 +83,7 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error ?? "创建支付链接失败");
+        setError(json.error ?? "Failed to create checkout link");
         return;
       }
       if (json.data.checkoutId) {
@@ -91,7 +91,7 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
       }
       window.location.href = json.data.url;
     } catch {
-      setError("网络错误");
+      setError("Network error");
     } finally {
       setLoading(null);
     }
@@ -104,12 +104,12 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
       const res = await fetch("/api/billing/portal", { method: "POST" });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error ?? "打开管理页失败");
+        setError(json.error ?? "Failed to open billing portal");
         return;
       }
       window.location.href = json.data.url;
     } catch {
-      setError("网络错误");
+      setError("Network error");
     } finally {
       setLoading(null);
     }
@@ -118,23 +118,23 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
   return (
     <>
       <SettingsNav />
-      <h1 className="text-2xl font-semibold text-slate-900">订阅计划</h1>
+      <h1 className="text-2xl font-semibold text-slate-900">Billing</h1>
       <p className="mt-1 text-sm text-slate-600">
-        当前计划：
+        Current plan:
         <span className="ml-1 font-medium text-primary">
           {PLAN_LABELS[currentPlan]}
         </span>
         {status?.cancelAtPeriodEnd ? (
-          <span className="ml-2 text-amber-600">（周期结束后降级）</span>
+          <span className="ml-2 text-amber-600">(downgrades at period end)</span>
         ) : null}
       </p>
       <p className="mt-1 text-xs text-slate-500">
-        支付由 Lemon Squeezy 托管（含全球税务）
+        Payments are hosted by Lemon Squeezy, including global tax handling.
       </p>
 
       {status?.currentPeriodEnd ? (
         <p className="mt-1 text-sm text-slate-500">
-          当前周期至 {new Date(status.currentPeriodEnd).toLocaleDateString("zh-CN")}
+          Current period ends {new Date(status.currentPeriodEnd).toLocaleDateString("en-US")}
         </p>
       ) : null}
 
@@ -149,8 +149,7 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
 
       {!status?.billingConfigured ? (
         <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Lemon Squeezy 尚未配置。在 .env.local 填入 API Key、Store ID、Variant ID，
-          详见项目文档或运行 <code className="font-mono">npm run ls:check</code>。
+          Lemon Squeezy is not configured. Add the API key, Store ID, and Variant IDs to .env.local, or run <code className="font-mono">npm run ls:check</code>.
         </p>
       ) : null}
 
@@ -159,12 +158,12 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
           <h2 className="text-lg font-semibold">Free</h2>
           <p className="mt-1 text-2xl font-bold">$0</p>
           <ul className="mt-4 space-y-2 text-sm text-slate-600">
-            <li>每月 10 张 Invoice</li>
-            <li>Standard 模板</li>
-            <li>基础客户与收款管理</li>
+            <li>10 invoices per month</li>
+            <li>Standard template</li>
+            <li>Basic client and payment tracking</li>
           </ul>
           {currentPlan === "FREE" ? (
-            <p className="mt-4 text-sm font-medium text-primary">当前计划</p>
+            <p className="mt-4 text-sm font-medium text-primary">Current plan</p>
           ) : null}
         </div>
 
@@ -187,7 +186,7 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
                 ))}
               </ul>
               {isCurrent ? (
-                <p className="mt-4 text-sm font-medium text-primary">当前计划</p>
+                <p className="mt-4 text-sm font-medium text-primary">Current plan</p>
               ) : (
                 <Button
                   className="mt-4 w-full"

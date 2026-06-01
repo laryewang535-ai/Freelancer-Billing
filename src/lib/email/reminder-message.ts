@@ -1,16 +1,12 @@
 import type { ReminderRuleType } from "@prisma/client";
 import { formatDate, formatMoney } from "@/lib/utils/format";
 
-// 邮件支持的语言；按 user.locale 简单归类，未知一律走 en
-type Locale = "en" | "zh";
+type Locale = "en";
 
 function normalizeLocale(locale: string | null | undefined): Locale {
-  if (!locale) return "en";
-  const lower = locale.toLowerCase();
-  return lower.startsWith("zh") ? "zh" : "en";
+  return "en";
 }
 
-// 5 档催款的语气配置（提前/到期/逾期会用不同口吻和颜色）
 type Tone = "gentle" | "neutral" | "firm" | "urgent";
 
 const TONE_BY_TYPE: Record<ReminderRuleType, Tone> = {
@@ -28,7 +24,6 @@ const ACCENT_BY_TONE: Record<Tone, { primary: string; bgSoft: string; badge: str
   urgent: { primary: "#DC2626", bgSoft: "#FEF2F2", badge: "#B91C1C" },
 };
 
-// 5 档 × 2 语言的文案；保持简洁、可直接阅读
 type Copy = {
   subject: string;
   badge: string;
@@ -111,73 +106,6 @@ const COPY: Record<Locale, Record<ReminderRuleType, Copy>> = {
       pdfNote: "The original invoice was sent in an earlier email.",
     },
   },
-  zh: {
-    BEFORE_7_DAYS: {
-      subject: "温馨提醒：发票 {invoice} 将于 7 天后到期",
-      badge: "即将到期",
-      heading: "您的发票即将到期",
-      intro: "您好 {client}，提前提醒您：以下发票将于 7 天后到期。",
-      amountLabel: "应付金额",
-      dueLabel: "到期日",
-      callToAction: "请在方便时查看并安排付款。",
-      buttonLabel: "查看发票",
-      closing: "感谢您的合作。",
-      footer: "由 Freelancer Billing 代 {seller} 发送。",
-      pdfNote: "原始发票已在此前邮件中发送，附件请见早前邮件。",
-    },
-    BEFORE_3_DAYS: {
-      subject: "提醒：发票 {invoice} 将于 3 天后到期",
-      badge: "即将到期",
-      heading: "发票 {invoice} 将于 3 天后到期",
-      intro: "您好 {client}，您的发票将于 3 天后到期，特此提醒。",
-      amountLabel: "应付金额",
-      dueLabel: "到期日",
-      callToAction: "如需协助处理付款，请随时联系我。",
-      buttonLabel: "查看发票",
-      closing: "提前感谢您的处理。",
-      footer: "由 Freelancer Billing 代 {seller} 发送。",
-      pdfNote: "原始发票已在此前邮件中发送，附件请见早前邮件。",
-    },
-    ON_DUE_DATE: {
-      subject: "发票 {invoice} 今日到期",
-      badge: "今日到期",
-      heading: "发票 {invoice} 今日到期",
-      intro: "您好 {client}，您的发票今日到期。如已完成付款请忽略此邮件。",
-      amountLabel: "应付金额",
-      dueLabel: "到期日",
-      callToAction: "请尽快安排付款。",
-      buttonLabel: "立即支付",
-      closing: "感谢您的配合。",
-      footer: "由 Freelancer Billing 代 {seller} 发送。",
-      pdfNote: "原始发票已在此前邮件中发送，附件请见早前邮件。",
-    },
-    OVERDUE_7_DAYS: {
-      subject: "逾期通知：发票 {invoice} 已逾期 7 天",
-      badge: "逾期 7 天",
-      heading: "发票 {invoice} 已逾期",
-      intro: "您好 {client}，发票 {invoice} 已逾期 7 天。如对该发票存在任何疑问，请告知我以便协助。",
-      amountLabel: "应付金额",
-      dueLabel: "原到期日",
-      callToAction: "请尽快安排付款。",
-      buttonLabel: "立即支付",
-      closing: "感谢您的及时处理。",
-      footer: "由 Freelancer Billing 代 {seller} 发送。",
-      pdfNote: "原始发票已在此前邮件中发送，附件请见早前邮件。",
-    },
-    OVERDUE_14_DAYS: {
-      subject: "紧急：发票 {invoice} 已逾期 14 天",
-      badge: "逾期 14 天",
-      heading: "发票 {invoice} 最终催款通知",
-      intro: "您好 {client}，发票 {invoice} 已逾期 14 天。如对该笔账款有任何疑问，请尽快与我联系。",
-      amountLabel: "应付金额",
-      dueLabel: "原到期日",
-      callToAction: "请尽快结清该笔余款，以免后续追讨。",
-      buttonLabel: "立即支付",
-      closing: "盼您尽快回复处理。",
-      footer: "由 Freelancer Billing 代 {seller} 发送。",
-      pdfNote: "原始发票已在此前邮件中发送，附件请见早前邮件。",
-    },
-  },
 };
 
 export type BuildReminderEmailParams = {
@@ -188,9 +116,7 @@ export type BuildReminderEmailParams = {
   dueDate: Date | string;
   clientName: string;
   sellerName: string;
-  /** 公开访问的 Invoice 详情链接（可选，没有时按钮会消失） */
   invoiceUrl?: string | null;
-  /** 用户区域，决定中英文 */
   locale?: string | null;
 };
 
@@ -200,7 +126,6 @@ export type BuiltReminderEmail = {
   text: string;
 };
 
-/** 构建催款邮件（subject + html + text 纯文本兜底） */
 export function buildReminderEmail(params: BuildReminderEmailParams): BuiltReminderEmail {
   const locale = normalizeLocale(params.locale);
   const copy = COPY[locale][params.type];
@@ -293,7 +218,7 @@ export function buildReminderEmail(params: BuildReminderEmailParams): BuiltRemin
     </div>
   `;
 
-  // 纯文本兜底，避免某些邮箱客户端只渲染 text
+  // 纯文本兜底，避免某些邮箱Client端只渲染 text
   const text =
     `${heading}\n\n` +
     `${intro}\n\n` +

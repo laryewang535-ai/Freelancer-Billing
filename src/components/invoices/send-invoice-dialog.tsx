@@ -26,7 +26,7 @@ type SendInvoiceDialogProps = {
   onSent: () => void;
 };
 
-/** 发送 Invoice 邮件弹窗：选择客户 + 编辑正文 */
+/** Send invoice email弹窗：选择Client + 编辑正文 */
 export function SendInvoiceDialog({
   open,
   onClose,
@@ -85,11 +85,11 @@ export function SendInvoiceDialog({
 
   async function handleSend() {
     if (!clientId) {
-      setError("请选择收件客户");
+      setError("Please select a recipient client");
       return;
     }
     if (!message.trim()) {
-      setError("请填写邮件正文");
+      setError("Please enter an email message");
       return;
     }
 
@@ -109,7 +109,7 @@ export function SendInvoiceDialog({
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setError(json.error ?? "发送失败");
+        setError(json.error ?? "Failed to send");
         setLoading(false);
         return;
       }
@@ -117,7 +117,7 @@ export function SendInvoiceDialog({
       onSent();
       onClose();
     } catch {
-      setError("网络错误");
+      setError("Network error");
     } finally {
       setLoading(false);
     }
@@ -132,15 +132,15 @@ export function SendInvoiceDialog({
         aria-labelledby="send-invoice-title"
       >
         <h2 id="send-invoice-title" className="text-lg font-semibold text-slate-900">
-          发送 Invoice 邮件
+          Send invoice email
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          {invoiceNumber} · {formatMoney(totalAmount, currency)} · 附件为 PDF 账单
+          {invoiceNumber} · {formatMoney(totalAmount, currency)} · PDF invoice attached
         </p>
 
         <div className="mt-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700">收件客户</label>
+            <label className="block text-sm font-medium text-slate-700">Recipient client</label>
             <select
               value={clientId}
               onChange={(e) => handleClientChange(e.target.value)}
@@ -155,13 +155,13 @@ export function SendInvoiceDialog({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700">邮件正文</label>
+            <label className="block text-sm font-medium text-slate-700">Email message</label>
             <textarea
               rows={8}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-              placeholder="输入要发送给客户的内容..."
+              placeholder="Enter the message to send to your client..."
             />
           </div>
         </div>

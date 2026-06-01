@@ -97,7 +97,7 @@ export function ClientFormDialog({
         }
       }
       setFieldErrors(next);
-      setSubmitError("请完善标红字段后再提交");
+      setSubmitError("Please fix the highlighted fields before submitting.");
       return;
     }
 
@@ -114,7 +114,7 @@ export function ClientFormDialog({
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setSubmitError(json.error ?? "操作失败");
+        setSubmitError(json.error ?? "Action failed");
         setLoading(false);
         return;
       }
@@ -122,7 +122,7 @@ export function ClientFormDialog({
       onSuccess();
       onClose();
     } catch {
-      setSubmitError("网络错误，请稍后重试");
+      setSubmitError("Network error. Please try again shortly.");
     } finally {
       setLoading(false);
     }
@@ -133,12 +133,12 @@ export function ClientFormDialog({
       <button
         type="button"
         className="absolute inset-0 bg-slate-900/40"
-        aria-label="关闭"
+        aria-label="Close"
         onClick={onClose}
       />
       <div className="relative z-10 w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
         <h2 className="text-lg font-semibold text-slate-900">
-          {mode === "create" ? "新建客户" : "编辑客户"}
+          {mode === "create" ? "New client" : "Edit client"}
         </h2>
 
         <form onSubmit={handleSubmit} noValidate className="mt-5 space-y-4">

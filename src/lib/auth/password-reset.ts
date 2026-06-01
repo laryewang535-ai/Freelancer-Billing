@@ -31,7 +31,7 @@ export async function requestPasswordReset(email: string): Promise<void> {
   }
 
   if (!isEmailConfigured()) {
-    console.error("[password-reset] Resend 未配置，无法发送重置邮件");
+    console.error("[password-reset] Resend is not configured; password reset email cannot be sent");
     return;
   }
 
@@ -53,7 +53,7 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
   await sendEmail({
     to: normalizedEmail,
-    subject: "重置您的 Freelancer Billing 密码",
+    subject: "Reset your Freelancer Billing password",
     html,
     from: buildResendFrom(),
   });

@@ -25,7 +25,7 @@ type Activity = {
 
 export function InvoiceTimeline({ activities }: { activities: Activity[] }) {
   if (activities.length === 0) {
-    return <p className="text-sm text-slate-500">暂无活动记录</p>;
+    return <p className="text-sm text-slate-500">No activity yet</p>;
   }
 
   return (

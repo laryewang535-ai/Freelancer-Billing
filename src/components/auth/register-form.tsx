@@ -43,7 +43,7 @@ export function RegisterForm({ oauth }: RegisterFormProps) {
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setError(json.error ?? "注册失败");
+        setError(json.error ?? "Registration failed");
         setLoading(false);
         return;
       }
@@ -51,7 +51,7 @@ export function RegisterForm({ oauth }: RegisterFormProps) {
       startNavigation();
       router.push("/login?registered=1");
     } catch {
-      setError("网络错误，请稍后重试");
+      setError("Network error. Please try again shortly.");
       setLoading(false);
     }
   }
@@ -59,7 +59,7 @@ export function RegisterForm({ oauth }: RegisterFormProps) {
   const submitting = loading || isNavigating;
 
   return (
-    <AuthCard title="创建账户" subtitle="开始管理你的发票与收款">
+    <AuthCard title="Create account" subtitle="Start managing invoices and payments">
       {hasOAuth ? (
         <>
           <OAuthButtons oauth={oauth} />
@@ -96,7 +96,7 @@ export function RegisterForm({ oauth }: RegisterFormProps) {
           onChange={(e) => setPassword(e.target.value)}
         />
         <p className="text-xs text-slate-500">
-          密码至少 8 位，需包含字母和数字。
+          Password must be at least 8 characters and include letters and numbers.
         </p>
 
         {error ? (

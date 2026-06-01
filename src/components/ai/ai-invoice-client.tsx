@@ -100,7 +100,7 @@ export function AiInvoiceClient({
 
   function handleTemplateChange(value: InvoiceTemplate) {
     if (!allowedTemplates.includes(value)) {
-      setTemplateError("该模板需要 Pro 计划，请前往设置 → 订阅计划升级");
+      setTemplateError("This template requires Pro. Upgrade in Settings → Billing.");
       return;
     }
     setTemplateError(null);
@@ -131,12 +131,12 @@ export function AiInvoiceClient({
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setGenerateError(json.error ?? "生成失败");
+        setGenerateError(json.error ?? "Generation failed");
         return;
       }
       applyAiResult(json.data);
     } catch {
-      setGenerateError("网络错误");
+      setGenerateError("Network error");
     } finally {
       setLoading(false);
     }
@@ -146,11 +146,11 @@ export function AiInvoiceClient({
     setSubmitError(null);
 
     if (!clientId) {
-      setSubmitError("请选择客户");
+      setSubmitError("Please select a client");
       return;
     }
     if (items.some((i) => !i.description.trim())) {
-      setSubmitError("请填写所有行项目描述");
+      setSubmitError("Please fill in every line item description");
       return;
     }
 
@@ -178,14 +178,14 @@ export function AiInvoiceClient({
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setSubmitError(json.error ?? "创建失败");
+        setSubmitError(json.error ?? "Failed to create");
         setCreating(false);
         return;
       }
       nav?.startNavigation();
       router.push(`/invoices/${json.data.id}/edit`);
     } catch {
-      setSubmitError("网络错误");
+      setSubmitError("Network error");
       setCreating(false);
     }
   }
@@ -194,7 +194,7 @@ export function AiInvoiceClient({
     <div>
       <div className="mb-6">
         <Link href="/invoices" className="text-sm text-primary hover:underline">
-          ← 返回 Invoice 列表
+          ← Back to invoices
         </Link>
       </div>
 
@@ -205,7 +205,7 @@ export function AiInvoiceClient({
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">AI Invoice</h1>
           <p className="mt-1 text-sm text-slate-600">
-            用自然语言描述，生成后可选择模板与版式，确认无误再创建
+            Describe the work in natural language, then review the generated invoice before creating it.
           </p>
         </div>
       </div>
@@ -213,14 +213,14 @@ export function AiInvoiceClient({
       <div className="mt-8 max-w-3xl">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <label className="block text-sm font-medium text-slate-700">
-            描述你的工作
+            Describe your work
           </label>
           <textarea
             rows={4}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-            placeholder="例如：为 Google 开一张网站开发发票，3000 美元，30 天付款"
+            placeholder="Example: Create an invoice for Google for website development, $3,000 USD, due in 30 days"
           />
           <div className="mt-3 space-y-2">
             <div className="flex flex-wrap items-center gap-3">
@@ -229,7 +229,7 @@ export function AiInvoiceClient({
               </Button>
               {generated ? (
                 <span className="text-xs text-emerald-600">
-                  ✓ 已根据描述填充下方表单，可继续修改
+                  ✓ Draft filled from your description. You can still edit it.
                 </span>
               ) : null}
             </div>
@@ -241,9 +241,9 @@ export function AiInvoiceClient({
       {generated ? (
         <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
           <div className="space-y-6">
-            {/* 模板与版式 */}
+            {/* Template and layout */}
             <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="font-medium text-slate-900">模板与版式</h2>
+              <h2 className="font-medium text-slate-900">Template and layout</h2>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {INVOICE_TEMPLATES.map((t) => {
                   const locked = !allowedTemplates.includes(t.value);
@@ -275,7 +275,7 @@ export function AiInvoiceClient({
               </div>
               <div className="mt-4">
                 <label className="block text-sm font-medium text-slate-700">
-                  纸张规格
+                  Paper size
                 </label>
                 <select
                   value={paperSize}
@@ -293,7 +293,7 @@ export function AiInvoiceClient({
                 <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700">
-                      品牌主色
+                      Brand color
                     </label>
                     <div className="mt-1 flex items-center gap-3">
                       <input
@@ -322,7 +322,7 @@ export function AiInvoiceClient({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700">
-                      页脚签名
+                      Footer signature
                     </label>
                     <input
                       value={footerSignature}
@@ -336,13 +336,13 @@ export function AiInvoiceClient({
               <FormSubmitError message={templateError} />
             </section>
 
-            {/* 客户与条款 */}
+            {/* Client and terms */}
             <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="font-medium text-slate-900">客户与条款</h2>
+              <h2 className="font-medium text-slate-900">Client and terms</h2>
               <div className="mt-4 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700">
-                    客户
+                    Client
                   </label>
                   <select
                     value={clientId}
@@ -360,7 +360,7 @@ export function AiInvoiceClient({
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-slate-700">
-                      币种
+                      Currency
                     </label>
                     <select
                       value={currency}
@@ -376,7 +376,7 @@ export function AiInvoiceClient({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700">
-                      税率 (%)
+                      Tax rate (%)
                     </label>
                     <input
                       type="number"
@@ -393,7 +393,7 @@ export function AiInvoiceClient({
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-slate-700">
-                      到期日
+                      Due date
                     </label>
                     <input
                       type="date"
@@ -404,7 +404,7 @@ export function AiInvoiceClient({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700">
-                      付款条款
+                      Payment terms
                     </label>
                     <input
                       value={paymentTerms}
@@ -415,7 +415,7 @@ export function AiInvoiceClient({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700">
-                    备注
+                    Notes
                   </label>
                   <textarea
                     rows={3}
@@ -428,12 +428,12 @@ export function AiInvoiceClient({
               </div>
             </section>
 
-            {/* 行项目 */}
+            {/* Line items */}
             <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-3 font-medium text-slate-900">行项目</h2>
+              <h2 className="mb-3 font-medium text-slate-900">Line items</h2>
               <LineItemsEditor items={items} onChange={setItems} />
               <div className="mt-4 flex justify-end border-t border-slate-100 pt-3 text-sm">
-                <span className="text-slate-600">合计：</span>
+                <span className="text-slate-600">Total:</span>
                 <span className="ml-2 font-semibold text-slate-900">
                   {formatMoney(totals.totalAmount, currency)}
                 </span>
@@ -456,16 +456,16 @@ export function AiInvoiceClient({
                 loading={loading}
                 loadingText="Generating…"
               >
-                重新生成
+                Regenerate
               </Button>
               </div>
             </div>
           </div>
 
-          {/* 预览 */}
+          {/* Preview */}
           <div className="lg:sticky lg:top-6 lg:self-start">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-medium text-slate-700">实时预览</p>
+              <p className="text-sm font-medium text-slate-700">Live preview</p>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
                 {paperSize === "LETTER" ? "Letter" : "A4"}
               </span>

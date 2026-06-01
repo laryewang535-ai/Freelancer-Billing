@@ -13,7 +13,7 @@ function emptyToNull(value: string | null | undefined) {
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
-    return fail("未登录", 401, "UNAUTHORIZED");
+    return fail("Unauthorized", 401, "UNAUTHORIZED");
   }
 
   const user = await prisma.user.findUnique({
@@ -42,7 +42,7 @@ export async function GET() {
   });
 
   if (!user) {
-    return fail("用户不存在", 404);
+    return fail("User not found", 404);
   }
 
   return ok(user);
@@ -52,7 +52,7 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
-    return fail("未登录", 401, "UNAUTHORIZED");
+    return fail("Unauthorized", 401, "UNAUTHORIZED");
   }
 
   try {
@@ -60,7 +60,7 @@ export async function PATCH(request: NextRequest) {
     const parsed = profileUpdateSchema.safeParse(body);
 
     if (!parsed.success) {
-      return fail(parsed.error.issues[0]?.message ?? "参数无效", 400);
+      return fail(parsed.error.issues[0]?.message ?? "Invalid parameters", 400);
     }
 
     const data = parsed.data;
@@ -104,6 +104,6 @@ export async function PATCH(request: NextRequest) {
     return ok(user);
   } catch (error) {
     console.error("[profile PATCH]", error);
-    return fail("更新失败", 500);
+    return fail("Update failed", 500);
   }
 }

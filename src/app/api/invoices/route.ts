@@ -11,7 +11,7 @@ import { createInvoice, listInvoices, peekNextInvoiceNumber } from "@/lib/servic
 /** 获取 Invoice 列表 / 预览下一个编号 */
 export async function GET(request: NextRequest) {
   const user = await getSessionUser();
-  if (!user) return fail("未登录", 401, "UNAUTHORIZED");
+  if (!user) return fail("Unauthorized", 401, "UNAUTHORIZED");
 
   if (request.nextUrl.searchParams.get("peekNumber") === "1") {
     const number = await peekNextInvoiceNumber(user.id);
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   const params = Object.fromEntries(request.nextUrl.searchParams);
   const parsed = invoiceListQuerySchema.safeParse(params);
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "参数无效", 400);
+    return fail(parsed.error.issues[0]?.message ?? "Invalid parameters", 400);
   }
 
   const result = await listInvoices(user.id, parsed.data);
@@ -31,13 +31,13 @@ export async function GET(request: NextRequest) {
 /** 创建 Invoice */
 export async function POST(request: NextRequest) {
   const user = await getSessionUser();
-  if (!user) return fail("未登录", 401, "UNAUTHORIZED");
+  if (!user) return fail("Unauthorized", 401, "UNAUTHORIZED");
 
   try {
     const body = await request.json();
     const parsed = createInvoiceSchema.safeParse(body);
     if (!parsed.success) {
-      return fail(parsed.error.issues[0]?.message ?? "参数无效", 400);
+      return fail(parsed.error.issues[0]?.message ?? "Invalid parameters", 400);
     }
 
     const invoice = await createInvoice(user.id, parsed.data);
@@ -45,22 +45,22 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === "CLIENT_NOT_FOUND") {
-        return fail("客户不存在", 404, "CLIENT_NOT_FOUND");
+        return fail("Client not found", 404, "CLIENT_NOT_FOUND");
       }
       if (error.message === "INVOICE_LIMIT_REACHED") {
-        return fail("Free 计划每月最多 10 张 Invoice，请升级 Pro", 403, "INVOICE_LIMIT_REACHED");
+        return fail("Free plan is limited to 10 invoices per month. Please upgrade to Pro.", 403, "INVOICE_LIMIT_REACHED");
       }
       if (error.message === "TEMPLATE_REQUIRES_PRO") {
-        return fail("该模板需要 Pro 计划，请前往设置升级", 403, "TEMPLATE_REQUIRES_PRO");
+        return fail("This template requires Pro. Upgrade in Settings.", 403, "TEMPLATE_REQUIRES_PRO");
       }
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2002"
       ) {
-        return fail("Invoice 编号冲突，请重试", 409, "INVOICE_NUMBER_CONFLICT");
+        return fail("Invoice number conflict. Please try again.", 409, "INVOICE_NUMBER_CONFLICT");
       }
     }
     console.error("[invoices POST]", error);
-    return fail("创建 Invoice 失败", 500);
+    return fail("Failed to create invoice", 500);
   }
 }

@@ -43,14 +43,14 @@ export function AnalyticsPageClient({
   return (
     <>
       <h1 className="text-2xl font-semibold text-slate-900">Analytics</h1>
-      <p className="mt-1 text-sm text-slate-600">收入与客户分析</p>
+      <p className="mt-1 text-sm text-slate-600">Revenue and client analytics</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "本月收入", value: formatMoney(overview.revenueThisMonth) },
-          { label: "待收款", value: formatMoney(overview.unpaidTotal) },
-          { label: "Invoice 总数", value: String(overview.invoiceCount) },
-          { label: "逾期", value: String(overview.overdueCount) },
+          { label: "Revenue this month", value: formatMoney(overview.revenueThisMonth) },
+          { label: "Outstanding", value: formatMoney(overview.unpaidTotal) },
+          { label: "Total invoices", value: String(overview.invoiceCount) },
+          { label: "Overdue", value: String(overview.overdueCount) },
         ].map((item) => (
           <div
             key={item.label}
@@ -64,7 +64,7 @@ export function AnalyticsPageClient({
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="font-semibold">收入趋势（6 个月）</h2>
+          <h2 className="font-semibold">Revenue trend (6 months)</h2>
           <div className="mt-4 h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueTrend}>
@@ -79,7 +79,7 @@ export function AnalyticsPageClient({
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="font-semibold">客户国家分布</h2>
+          <h2 className="font-semibold">Client country distribution</h2>
           <div className="mt-4 h-72">
             {countryChart.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -101,14 +101,14 @@ export function AnalyticsPageClient({
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="py-20 text-center text-sm text-slate-500">暂无客户数据</p>
+              <p className="py-20 text-center text-sm text-slate-500">No client data yet</p>
             )}
           </div>
         </div>
       </div>
 
       <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="font-semibold">客户收入排行</h2>
+        <h2 className="font-semibold">Top clients by revenue</h2>
         <table className="mt-4 min-w-full text-sm">
           <thead className="text-left text-slate-500">
             <tr>

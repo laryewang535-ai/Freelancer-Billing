@@ -23,7 +23,7 @@ export function OAuthButtons({ oauth, callbackUrl = "/dashboard" }: OAuthButtons
           className="w-full"
           onClick={() => signIn("google", { callbackUrl })}
         >
-          使用 Google 账号登录
+          Continue with Google
         </Button>
       ) : null}
       {oauth.github ? (
@@ -33,7 +33,7 @@ export function OAuthButtons({ oauth, callbackUrl = "/dashboard" }: OAuthButtons
           className="w-full"
           onClick={() => signIn("github", { callbackUrl })}
         >
-          使用 GitHub 登录
+          Continue with GitHub
         </Button>
       ) : null}
     </div>

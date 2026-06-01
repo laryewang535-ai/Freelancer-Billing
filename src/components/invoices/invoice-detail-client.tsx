@@ -79,7 +79,7 @@ export function InvoiceDetailClient({
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setError(json.error ?? "操作失败");
+        setError(json.error ?? "Action failed");
         setLoading(null);
         return;
       }
@@ -93,14 +93,14 @@ export function InvoiceDetailClient({
         router.refresh();
       }
     } catch {
-      setError("网络错误");
+      setError("Network error");
     } finally {
       setLoading(null);
     }
   }
 
   async function handleDelete() {
-    if (!confirm(`确定删除 Invoice ${invoice.invoiceNumber}？`)) return;
+    if (!confirm(`Delete invoice ${invoice.invoiceNumber}?`)) return;
     setLoading("delete");
     setError(null);
 
@@ -108,14 +108,14 @@ export function InvoiceDetailClient({
       const res = await fetch(`/api/invoices/${invoice.id}`, { method: "DELETE" });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error ?? "删除失败");
+        setError(json.error ?? "Failed to delete");
         setLoading(null);
         return;
       }
       nav?.startNavigation();
       router.push("/invoices");
     } catch {
-      setError("网络错误");
+      setError("Network error");
       setLoading(null);
     }
   }
@@ -124,7 +124,7 @@ export function InvoiceDetailClient({
     <div>
       <div className="mb-6">
         <Link href="/invoices" className="text-sm text-primary hover:underline">
-          ← 返回 Invoice 列表
+          ← Back to invoices
         </Link>
       </div>
 
@@ -153,7 +153,7 @@ export function InvoiceDetailClient({
               title={
                 emailConfigured
                   ? undefined
-                  : "请先在 .env.local 配置 Resend（RESEND_API_KEY + RESEND_FROM_EMAIL）"
+                  : "Configure Resend in .env.local first (RESEND_API_KEY + RESEND_FROM_EMAIL)."
               }
             >
               Send Invoice
@@ -213,15 +213,15 @@ export function InvoiceDetailClient({
 
       {canSend && !emailConfigured ? (
         <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          平台邮件未配置：在 <code className="text-xs">.env.local</code> 中设置{" "}
-          <strong>RESEND_API_KEY</strong> 和 <strong>RESEND_FROM_EMAIL</strong>。
-          本地测试可用 <code className="text-xs">onboarding@resend.dev</code>。
+          Email is not configured: set <code className="text-xs">.env.local</code> in {" "}
+          <strong>RESEND_API_KEY</strong> and <strong>RESEND_FROM_EMAIL</strong>。
+          For local testing, you can use <code className="text-xs">onboarding@resend.dev</code>。
         </p>
       ) : null}
 
       {canSend && emailConfigured ? (
         <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">
-          平台 Resend 已就绪：所有用户共用平台发信，显示名为您的公司/姓名，客户回复会转到您的登录邮箱。
+          Resend is ready: platform email is shared across users, the sender name uses your company/name, and client replies go to your login email.
         </p>
       ) : null}
 

@@ -72,7 +72,7 @@ export function InvoicesPageClient({
   useEffect(() => {
     const duplicated = searchParams.get("duplicated");
     if (duplicated) {
-      setSuccessMessage(`Invoice ${duplicated} 复制成功`);
+      setSuccessMessage(`Invoice ${duplicated} duplicated successfully`);
       router.replace("/invoices");
     }
   }, [searchParams, router]);
@@ -127,14 +127,14 @@ export function InvoicesPageClient({
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setActionError(json.error ?? "删除失败");
+        setActionError(json.error ?? "Failed to delete");
         return;
       }
 
       fetchInvoices(meta.page, search.trim(), status);
       router.refresh();
     } catch {
-      setActionError("网络错误，请稍后重试");
+      setActionError("Network error. Please try again shortly.");
     } finally {
       setActionLoadingId(null);
     }
@@ -145,10 +145,10 @@ export function InvoicesPageClient({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Invoices</h1>
-          <p className="mt-1 text-sm text-slate-600">共 {meta.total} 张 Invoice</p>
+          <p className="mt-1 text-sm text-slate-600">{meta.total} invoices total</p>
         </div>
 
-        {/* AI / 手动 创建：合并为一组操作 */}
+        {/* AI and manual creation actions */}
         <div className="inline-flex items-stretch overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
           <Link href="/invoices/ai" className="contents">
             <button
@@ -169,7 +169,7 @@ export function InvoicesPageClient({
               className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               <span className="text-base leading-none">＋</span>
-              <span>手动创建</span>
+              <span>Manual invoice</span>
             </button>
           </Link>
         </div>
@@ -187,11 +187,11 @@ export function InvoicesPageClient({
               ✓
             </div>
             <h2 id="duplicate-success-title" className="text-lg font-semibold text-slate-900">
-              复制成功
+              Invoice duplicated
             </h2>
             <p className="mt-2 text-sm text-slate-600">{successMessage}</p>
             <Button className="mt-5 w-full" onClick={() => setSuccessMessage(null)}>
-              知道了
+              Got it
             </Button>
           </div>
         </div>
@@ -201,7 +201,7 @@ export function InvoicesPageClient({
         <form onSubmit={handleSearch} className="flex flex-1 gap-2">
           <input
             type="search"
-            placeholder="搜索编号或客户..."
+            placeholder="Search number or client..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="app-input h-10 flex-1"
@@ -243,14 +243,14 @@ export function InvoicesPageClient({
                 <th className="px-4 py-3 font-medium text-right">Amount</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Due Date</th>
-                <th className="px-4 py-3 font-medium text-right">操作</th>
+                <th className="px-4 py-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
-                    {loading ? "加载中..." : "暂无 Invoice"}
+                    {loading ? "Loading..." : "No invoices yet"}
                   </td>
                 </tr>
               ) : (
@@ -307,7 +307,7 @@ export function InvoicesPageClient({
       {meta.totalPages > 1 ? (
         <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
           <span>
-            第 {meta.page} / {meta.totalPages} 页
+            Page {meta.page} of {meta.totalPages}
           </span>
           <div className="flex gap-2">
             <Button
@@ -316,7 +316,7 @@ export function InvoicesPageClient({
               disabled={meta.page <= 1 || loading}
               onClick={() => fetchInvoices(meta.page - 1, search.trim(), status)}
             >
-              上一页
+              Previous
             </Button>
             <Button
               variant="outline"
@@ -324,7 +324,7 @@ export function InvoicesPageClient({
               disabled={meta.page >= meta.totalPages || loading}
               onClick={() => fetchInvoices(meta.page + 1, search.trim(), status)}
             >
-              下一页
+              Next
             </Button>
           </div>
         </div>

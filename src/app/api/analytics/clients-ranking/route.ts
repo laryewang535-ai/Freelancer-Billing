@@ -5,7 +5,7 @@ import { getClientsRanking } from "@/lib/services/analytics.service";
 
 export async function GET(request: NextRequest) {
   const user = await getSessionUser();
-  if (!user) return fail("未登录", 401, "UNAUTHORIZED");
+  if (!user) return fail("Unauthorized", 401, "UNAUTHORIZED");
 
   const limit = Number(request.nextUrl.searchParams.get("limit") ?? 10);
   const data = await getClientsRanking(user.id, limit);

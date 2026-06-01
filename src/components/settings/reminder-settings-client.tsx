@@ -4,11 +4,11 @@ import { useState } from "react";
 import { Button } from "@/components/auth/auth-ui";
 
 const RULE_LABELS: Record<string, string> = {
-  BEFORE_7_DAYS: "到期前 7 天",
-  BEFORE_3_DAYS: "到期前 3 天",
-  ON_DUE_DATE: "到期当天",
-  OVERDUE_7_DAYS: "逾期 7 天",
-  OVERDUE_14_DAYS: "逾期 14 天",
+  BEFORE_7_DAYS: "7 days before due date",
+  BEFORE_3_DAYS: "3 days before due date",
+  ON_DUE_DATE: "On due date",
+  OVERDUE_7_DAYS: "7 days overdue",
+  OVERDUE_14_DAYS: "14 days overdue",
 };
 
 type Rule = { id: string; type: string; enabled: boolean };
@@ -40,13 +40,13 @@ export function ReminderSettingsClient({ initialRules }: { initialRules: Rule[] 
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error ?? "保存失败");
+        setError(json.error ?? "Failed to save");
       } else {
-        setMessage("已保存");
+        setMessage("Saved");
         setRules(json.data);
       }
     } catch {
-      setError("网络错误");
+      setError("Network error");
     } finally {
       setLoading(false);
     }
@@ -54,8 +54,8 @@ export function ReminderSettingsClient({ initialRules }: { initialRules: Rule[] 
 
   return (
     <>
-      <h1 className="text-2xl font-semibold text-slate-900">催款设置</h1>
-      <p className="mt-1 text-sm text-slate-600">Pro 计划可启用 5 档自动催款规则</p>
+      <h1 className="text-2xl font-semibold text-slate-900">Reminder settings</h1>
+      <p className="mt-1 text-sm text-slate-600">Pro unlocks five automatic reminder rules.</p>
 
       <ul className="mt-6 space-y-3">
         {rules.map((rule) => (

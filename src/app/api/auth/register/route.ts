@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const parsed = registerSchema.safeParse(body);
 
     if (!parsed.success) {
-      return fail(parsed.error.issues[0]?.message ?? "参数无效", 400);
+      return fail(parsed.error.issues[0]?.message ?? "Invalid parameters", 400);
     }
 
     const { name, email, password } = parsed.data;
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existing) {
-      return fail("该邮箱已注册", 409, "EMAIL_EXISTS");
+      return fail("This email is already registered", 409, "EMAIL_EXISTS");
     }
 
     const passwordHash = await hashPassword(password);
@@ -47,6 +47,6 @@ export async function POST(request: NextRequest) {
     return ok(user, { status: 201 });
   } catch (error) {
     console.error("[register]", error);
-    return fail("注册失败，请稍后重试", 500);
+    return fail("Registration failed. Please try again later.", 500);
   }
 }
