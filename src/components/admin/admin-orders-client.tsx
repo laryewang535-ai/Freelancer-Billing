@@ -70,6 +70,7 @@ export function AdminOrdersClient({
 }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const [initializing, setInitializing] = useState(false);
   const [acting, setActing] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +99,24 @@ export function AdminOrdersClient({
       setError("Network error while recording the order");
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function initializeOrderTables() {
+    setInitializing(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/admin/external-orders/setup", { method: "POST" });
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        setError(json.error ?? "Could not initialize order tables");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("Network error while initializing order tables");
+    } finally {
+      setInitializing(false);
     }
   }
 
@@ -147,9 +166,12 @@ export function AdminOrdersClient({
       {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p> : null}
 
       {databaseSetupRequired ? (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          The external-order tables are not initialized yet. Run the production database migration once, then refresh this page.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <p>The external-order tables are not initialized yet.</p>
+          <Button type="button" size="sm" variant="outline" loading={initializing} loadingText="Initializing..." onClick={initializeOrderTables}>
+            Initialize order tables
+          </Button>
+        </div>
       ) : null}
 
       <section className="border-y border-slate-200 py-6">
