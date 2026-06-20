@@ -10,6 +10,7 @@ type AppShellProps = {
     name?: string | null;
     plan: Plan;
   };
+  isAdmin?: boolean;
   children: React.ReactNode;
 };
 
@@ -37,7 +38,7 @@ const planStyles: Record<Plan, string> = {
   BUSINESS: "bg-violet-50 text-violet-700 ring-1 ring-violet-100",
 };
 
-export function AppShell({ user, children }: AppShellProps) {
+export function AppShell({ user, isAdmin = false, children }: AppShellProps) {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
@@ -54,7 +55,7 @@ export function AppShell({ user, children }: AppShellProps) {
                 Freelancer Billing
               </span>
             </Link>
-            <DashboardNav />
+            <DashboardNav isAdmin={isAdmin} />
           </div>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <span className="hidden max-w-[180px] truncate text-sm text-slate-600 lg:inline">

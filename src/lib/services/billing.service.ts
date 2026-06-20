@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import type { Plan, SubscriptionStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { getActiveManualEntitlement, getEffectivePlan } from "@/lib/services/manual-entitlement.service";
 import {
   getAppUrl,
   isLemonSqueezyConfigured,
@@ -21,12 +22,13 @@ export async function getBillingStatus(userId: string) {
   const subscription = await prisma.subscription.findUnique({
     where: { userId },
   });
+  const manualEntitlement = await getActiveManualEntitlement(userId);
 
   return {
-    plan: subscription?.plan ?? "FREE",
-    status: subscription?.status ?? "ACTIVE",
-    currentPeriodEnd: subscription?.currentPeriodEnd?.toISOString() ?? null,
-    cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd ?? false,
+    plan: await getEffectivePlan(userId),
+    status: manualEntitlement?.status ?? subscription?.status ?? "ACTIVE",
+    currentPeriodEnd: (manualEntitlement?.currentPeriodEnd ?? subscription?.currentPeriodEnd)?.toISOString() ?? null,
+    cancelAtPeriodEnd: manualEntitlement?.cancelAtPeriodEnd ?? subscription?.cancelAtPeriodEnd ?? false,
     billingConfigured: isLemonSqueezyConfigured(),
   };
 }

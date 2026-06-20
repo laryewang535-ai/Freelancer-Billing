@@ -8,6 +8,7 @@ import { verifyPassword } from "@/lib/auth/password";
 import { loginSchema } from "@/lib/validators/auth";
 import type { NextAuthConfig } from "next-auth";
 import type { Plan } from "@prisma/client";
+import { getUserPlan } from "@/lib/billing/plan-limits";
 
 const providers: NonNullable<NextAuthConfig["providers"]> = [
   Credentials({
@@ -42,7 +43,7 @@ const providers: NonNullable<NextAuthConfig["providers"]> = [
         email: user.email,
         name: user.name,
         image: user.image,
-        plan: user.subscription?.plan ?? "FREE",
+        plan: await getUserPlan(user.id),
       };
     },
   }),
@@ -88,11 +89,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       if (token.id) {
-        const subscription = await prisma.subscription.findUnique({
-          where: { userId: token.id },
-          select: { plan: true },
-        });
-        token.plan = subscription?.plan ?? "FREE";
+        token.plan = await getUserPlan(token.id);
       }
 
       return token;

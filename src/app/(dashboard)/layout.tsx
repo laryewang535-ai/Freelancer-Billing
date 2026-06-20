@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "../../../auth";
 import { AppShell } from "@/components/layout/app-shell";
+import { isAdminEmail } from "@/lib/auth/admin";
 
 export default async function DashboardLayout({
   children,
@@ -12,5 +13,5 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  return <AppShell user={session.user}>{children}</AppShell>;
+  return <AppShell user={session.user} isAdmin={isAdminEmail(session.user.email)}>{children}</AppShell>;
 }

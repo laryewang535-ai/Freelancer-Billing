@@ -9,7 +9,10 @@ export default async function BillingSettingsPage() {
 
   return (
     <Suspense fallback={<p className="text-sm text-slate-500">Loading...</p>}>
-      <BillingSettingsClient initialPlan={session.user.plan ?? "FREE"} />
+      <BillingSettingsClient
+        initialPlan={session.user.plan ?? "FREE"}
+        externalProPurchaseUrl={process.env.NEXT_PUBLIC_EXTERNAL_PRO_PURCHASE_URL ?? null}
+      />
     </Suspense>
   );
 }

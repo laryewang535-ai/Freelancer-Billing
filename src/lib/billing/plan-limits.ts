@@ -1,5 +1,6 @@
-import { prisma } from "@/lib/db";
 import type { Plan } from "@prisma/client";
+import { prisma } from "@/lib/db";
+import { getEffectivePlan } from "@/lib/services/manual-entitlement.service";
 
 /** 各计划限额 */
 export const PLAN_LIMITS = {
@@ -19,11 +20,7 @@ export const PLAN_LIMITS = {
 
 /** 获取用户当前计划 */
 export async function getUserPlan(userId: string): Promise<Plan> {
-  const sub = await prisma.subscription.findUnique({
-    where: { userId },
-    select: { plan: true },
-  });
-  return sub?.plan ?? "FREE";
+  return getEffectivePlan(userId);
 }
 
 /** 统计当月已创建 Invoice 数量 */

@@ -13,12 +13,15 @@ const NAV_ITEMS = [
   { href: "/settings/billing", label: "Settings" },
 ];
 
-export function DashboardNav() {
+export function DashboardNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
+  const items = isAdmin
+    ? [...NAV_ITEMS, { href: "/admin/orders", label: "Orders" }]
+    : NAV_ITEMS;
 
   return (
     <nav className="hidden items-center gap-1 md:flex">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active =
           pathname === item.href || pathname.startsWith(`${item.href}/`);
 

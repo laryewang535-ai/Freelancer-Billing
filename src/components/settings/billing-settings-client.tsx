@@ -22,7 +22,13 @@ type BillingStatus = {
   billingConfigured: boolean;
 };
 
-export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
+export function BillingSettingsClient({
+  initialPlan,
+  externalProPurchaseUrl,
+}: {
+  initialPlan: Plan;
+  externalProPurchaseUrl: string | null;
+}) {
   const searchParams = useSearchParams();
   const { update: updateSession } = useSession();
   const [status, setStatus] = useState<BillingStatus | null>(null);
@@ -73,6 +79,11 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
   const currentPlan = status?.plan ?? initialPlan;
 
   async function checkout(plan: "PRO" | "BUSINESS") {
+    if (plan === "PRO" && externalProPurchaseUrl) {
+      window.location.href = externalProPurchaseUrl;
+      return;
+    }
+
     setLoading(plan);
     setError(null);
     try {
@@ -129,7 +140,7 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
         ) : null}
       </p>
       <p className="mt-1 text-xs text-slate-500">
-        Payments are hosted by Lemon Squeezy, including global tax handling.
+        Payments are hosted by the selected payment provider. External purchases are activated after order verification.
       </p>
 
       {status?.currentPeriodEnd ? (
@@ -147,7 +158,7 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
         <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-error">{error}</p>
       ) : null}
 
-      {!status?.billingConfigured ? (
+      {!status?.billingConfigured && !externalProPurchaseUrl ? (
         <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
           Lemon Squeezy is not configured. Add the API key, Store ID, and Variant IDs to .env.local, or run <code className="font-mono">npm run ls:check</code>.
         </p>
@@ -190,12 +201,18 @@ export function BillingSettingsClient({ initialPlan }: { initialPlan: Plan }) {
               ) : (
                 <Button
                   className="mt-4 w-full"
-                  disabled={!status?.billingConfigured}
+                  disabled={
+                    planKey === "PRO"
+                      ? !externalProPurchaseUrl && !status?.billingConfigured
+                      : !status?.billingConfigured
+                  }
                   loading={loading === planKey}
-                  loadingText="Redirecting…"
+                  loadingText="Opening…"
                   onClick={() => checkout(planKey)}
                 >
-                  Upgrade to {plan.name}
+                  {planKey === "PRO" && externalProPurchaseUrl
+                    ? `Buy ${plan.name}`
+                    : `Upgrade to ${plan.name}`}
                 </Button>
               )}
             </div>
