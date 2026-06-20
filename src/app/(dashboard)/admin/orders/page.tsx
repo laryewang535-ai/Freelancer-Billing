@@ -4,13 +4,30 @@ import { isAdminEmail } from "@/lib/auth/admin";
 import { listExternalOrders } from "@/lib/services/external-order.service";
 import { AdminOrdersClient } from "@/components/admin/admin-orders-client";
 
+function isMissingExternalOrdersTable(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "P2021"
+  );
+}
+
 export default async function AdminOrdersPage() {
   const session = await auth();
   if (!session?.user?.email || !isAdminEmail(session.user.email)) {
     redirect("/dashboard");
   }
 
-  const orders = await listExternalOrders();
+  let orders;
+  let databaseSetupRequired = false;
+  try {
+    orders = await listExternalOrders();
+  } catch (error) {
+    if (!isMissingExternalOrdersTable(error)) throw error;
+    orders = [];
+    databaseSetupRequired = true;
+  }
   const initialOrders = orders.map((order) => ({
     ...order,
     amount: order.amount?.toString() ?? null,
@@ -26,5 +43,10 @@ export default async function AdminOrdersPage() {
     })),
   }));
 
-  return <AdminOrdersClient initialOrders={initialOrders} />;
+  return (
+    <AdminOrdersClient
+      initialOrders={initialOrders}
+      databaseSetupRequired={databaseSetupRequired}
+    />
+  );
 }

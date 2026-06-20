@@ -61,7 +61,13 @@ function dateTime(value: string | null) {
   return value ? new Date(value).toLocaleString("en-US") : "-";
 }
 
-export function AdminOrdersClient({ initialOrders }: { initialOrders: Order[] }) {
+export function AdminOrdersClient({
+  initialOrders,
+  databaseSetupRequired = false,
+}: {
+  initialOrders: Order[];
+  databaseSetupRequired?: boolean;
+}) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [acting, setActing] = useState<string | null>(null);
@@ -140,12 +146,19 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: Order[] })
       {message ? <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800">{message}</p> : null}
       {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p> : null}
 
+      {databaseSetupRequired ? (
+        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          The external-order tables are not initialized yet. Run the production database migration once, then refresh this page.
+        </p>
+      ) : null}
+
       <section className="border-y border-slate-200 py-6">
         <h2 className="text-lg font-semibold text-slate-900">Record verified purchase</h2>
         <form
           id="external-order-form"
           className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4"
           action={(formData) => createOrder(formData)}
+          aria-disabled={databaseSetupRequired}
         >
           <Input label="App account email" name="userEmail" type="email" required />
           <Input label="Platform order ID" name="externalOrderId" required />
@@ -175,7 +188,7 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: Order[] })
             <textarea name="notes" rows={1} className="app-input w-full" />
           </label>
           <div className="flex items-end">
-            <Button type="submit" loading={creating} loadingText="Recording..." className="w-full">
+            <Button type="submit" loading={creating} loadingText="Recording..." disabled={databaseSetupRequired} className="w-full">
               Record order
             </Button>
           </div>
