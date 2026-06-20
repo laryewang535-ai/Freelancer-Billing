@@ -19,7 +19,7 @@ export default async function AdminOrdersPage() {
     redirect("/dashboard");
   }
 
-  let orders;
+  let orders: Awaited<ReturnType<typeof listExternalOrders>> = [];
   let databaseSetupRequired = false;
   try {
     orders = await listExternalOrders();
