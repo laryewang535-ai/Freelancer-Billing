@@ -3,9 +3,18 @@ import { prisma } from "@/lib/db";
 
 /** 返回有效的人工权益；过期权益在读取时自动标记为已结束。 */
 export async function getActiveManualEntitlement(userId: string) {
-  const entitlement = await prisma.manualEntitlement.findUnique({
-    where: { userId },
-  });
+  let entitlement;
+  try {
+    entitlement = await prisma.manualEntitlement.findUnique({
+      where: { userId },
+    });
+  } catch (error) {
+    // Keep the existing app usable while a deployment is waiting for this migration.
+    if (typeof error === "object" && error && "code" in error && error.code === "P2021") {
+      return null;
+    }
+    throw error;
+  }
 
   if (!entitlement || entitlement.plan === "FREE" || entitlement.status !== "ACTIVE") {
     return null;
