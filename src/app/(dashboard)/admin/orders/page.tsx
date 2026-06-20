@@ -4,15 +4,6 @@ import { isAdminEmail } from "@/lib/auth/admin";
 import { listExternalOrders } from "@/lib/services/external-order.service";
 import { AdminOrdersClient } from "@/components/admin/admin-orders-client";
 
-function isMissingExternalOrdersTable(error: unknown) {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    error.code === "P2021"
-  );
-}
-
 export default async function AdminOrdersPage() {
   const session = await auth();
   if (!session?.user?.email || !isAdminEmail(session.user.email)) {
@@ -24,7 +15,9 @@ export default async function AdminOrdersPage() {
   try {
     orders = await listExternalOrders();
   } catch (error) {
-    if (!isMissingExternalOrdersTable(error)) throw error;
+    // A newly provisioned database has no external-order tables until its
+    // first migration completes. Keep the admin shell usable in that state.
+    console.error("[admin orders list]", error);
     orders = [];
     databaseSetupRequired = true;
   }
