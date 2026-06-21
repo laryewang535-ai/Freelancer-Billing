@@ -13,7 +13,7 @@ export const PLAN_CATALOG: Record<
 > = {
   PRO: {
     name: "Pro",
-    priceLabel: "$8.99/month",
+    priceLabel: "$9/month",
     variantEnv: "LEMONSQUEEZY_VARIANT_PRO",
     features: [
       "Unlimited invoices",

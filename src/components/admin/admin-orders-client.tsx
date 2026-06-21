@@ -199,7 +199,6 @@ export function AdminOrdersClient({
             <span>Plan</span>
             <select name="plan" defaultValue="PRO" className="app-input w-full">
               <option value="PRO">Pro</option>
-              <option value="BUSINESS">Business</option>
             </select>
           </label>
           <Input label="Buyer email (optional)" name="purchaserEmail" type="email" />

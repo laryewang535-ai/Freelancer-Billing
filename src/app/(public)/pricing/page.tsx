@@ -9,15 +9,9 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "$8.99/month",
+    price: "$9/month",
     description: "For freelancers who invoice clients regularly.",
     features: ["Unlimited invoices", "AI invoice generation", "Automatic payment reminders", "Analytics", "All templates"],
-  },
-  {
-    name: "Business",
-    price: "$19.90/month",
-    description: "For small teams and growing service businesses.",
-    features: ["Everything in Pro", "Team collaboration, coming soon", "API access, coming soon"],
   },
 ];
 
@@ -52,7 +46,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="mt-14 grid gap-5 md:grid-cols-3">
+      <section className="mt-14 grid gap-5 md:grid-cols-2">
         {plans.map((plan) => (
           <article key={plan.name} className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold">{plan.name}</h2>

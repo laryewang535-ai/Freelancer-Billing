@@ -164,7 +164,7 @@ export function BillingSettingsClient({
         </p>
       ) : null}
 
-      <div className="mt-8 grid gap-6 md:grid-cols-3">
+      <div className="mt-8 grid gap-6 md:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold">Free</h2>
           <p className="mt-1 text-2xl font-bold">$0</p>
@@ -178,7 +178,7 @@ export function BillingSettingsClient({
           ) : null}
         </div>
 
-        {(["PRO", "BUSINESS"] as const).map((planKey) => {
+        {(["PRO"] as const).map((planKey) => {
           const plan = PLAN_CATALOG[planKey];
           const isCurrent = currentPlan === planKey;
 
@@ -201,16 +201,12 @@ export function BillingSettingsClient({
               ) : (
                 <Button
                   className="mt-4 w-full"
-                  disabled={
-                    planKey === "PRO"
-                      ? !externalProPurchaseUrl && !status?.billingConfigured
-                      : !status?.billingConfigured
-                  }
+                  disabled={!externalProPurchaseUrl && !status?.billingConfigured}
                   loading={loading === planKey}
                   loadingText="Opening…"
                   onClick={() => checkout(planKey)}
                 >
-                  {planKey === "PRO" && externalProPurchaseUrl
+                  {externalProPurchaseUrl
                     ? `Buy ${plan.name}`
                     : `Upgrade to ${plan.name}`}
                 </Button>
