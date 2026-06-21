@@ -64,9 +64,11 @@ function dateTime(value: string | null) {
 export function AdminOrdersClient({
   initialOrders,
   databaseSetupRequired = false,
+  databaseSetupError = null,
 }: {
   initialOrders: Order[];
   databaseSetupRequired?: boolean;
+  databaseSetupError?: string | null;
 }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
@@ -171,6 +173,7 @@ export function AdminOrdersClient({
           <Button type="button" size="sm" variant="outline" loading={initializing} loadingText="Initializing..." onClick={initializeOrderTables}>
             Initialize order tables
           </Button>
+          {databaseSetupError ? <p className="w-full break-words text-xs text-amber-800">{databaseSetupError}</p> : null}
         </div>
       ) : null}
 

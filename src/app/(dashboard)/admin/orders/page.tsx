@@ -12,6 +12,7 @@ export default async function AdminOrdersPage() {
 
   let orders: Awaited<ReturnType<typeof listExternalOrders>> = [];
   let databaseSetupRequired = false;
+  let databaseSetupError: string | null = null;
   try {
     orders = await listExternalOrders();
   } catch (error) {
@@ -24,6 +25,8 @@ export default async function AdminOrdersPage() {
     });
     orders = [];
     databaseSetupRequired = true;
+    databaseSetupError =
+      typeof prismaError.message === "string" ? prismaError.message : String(error);
   }
   const initialOrders = orders.map((order) => ({
     ...order,
@@ -44,6 +47,7 @@ export default async function AdminOrdersPage() {
     <AdminOrdersClient
       initialOrders={initialOrders}
       databaseSetupRequired={databaseSetupRequired}
+      databaseSetupError={databaseSetupError}
     />
   );
 }
