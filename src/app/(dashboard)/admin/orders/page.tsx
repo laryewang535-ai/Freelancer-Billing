@@ -17,7 +17,11 @@ export default async function AdminOrdersPage() {
   } catch (error) {
     // A newly provisioned database has no external-order tables until its
     // first migration completes. Keep the admin shell usable in that state.
-    console.error("[admin orders list]", error);
+    const prismaError = error as { code?: unknown; message?: unknown };
+    console.error("[admin orders list]", {
+      code: prismaError.code ?? null,
+      message: prismaError.message ?? String(error),
+    });
     orders = [];
     databaseSetupRequired = true;
   }
