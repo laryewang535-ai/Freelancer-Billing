@@ -27,6 +27,16 @@ const EMPTY_FORM: ClientFormValues = {
   notes: "",
 };
 
+const FIELD_LABELS: Record<keyof ClientFormValues, string> = {
+  companyName: "Company Name",
+  contactName: "Contact Name",
+  email: "Email",
+  country: "Country",
+  address: "Address",
+  vatNumber: "VAT Number",
+  notes: "Notes",
+};
+
 type ClientFormDialogProps = {
   open: boolean;
   mode: "create" | "edit";
@@ -90,14 +100,16 @@ export function ClientFormDialog({
     const parsed = createClientSchema.safeParse(payload);
     if (!parsed.success) {
       const next: Partial<Record<keyof ClientFormValues, string>> = {};
+      const summary: string[] = [];
       for (const issue of parsed.error.issues) {
         const key = issue.path[0] as keyof ClientFormValues | undefined;
         if (key && !next[key]) {
           next[key] = issue.message;
+          summary.push(`${FIELD_LABELS[key]}: ${issue.message}`);
         }
       }
       setFieldErrors(next);
-      setSubmitError("Please fix the highlighted fields before submitting.");
+      setSubmitError(summary.length > 0 ? summary.join(" ") : "Please fix the highlighted fields before submitting.");
       return;
     }
 
@@ -129,14 +141,14 @@ export function ClientFormDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center">
       <button
         type="button"
         className="absolute inset-0 bg-slate-900/40"
         aria-label="Close"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+      <div className="relative z-10 my-auto max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl sm:p-6">
         <h2 className="text-lg font-semibold text-slate-900">
           {mode === "create" ? "New client" : "Edit client"}
         </h2>
