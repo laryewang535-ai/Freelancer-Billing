@@ -24,14 +24,22 @@ type BillingStatus = {
 
 export function BillingSettingsClient({
   initialPlan,
+  initialBillingConfigured,
   externalProPurchaseUrl,
 }: {
   initialPlan: Plan;
+  initialBillingConfigured: boolean;
   externalProPurchaseUrl: string | null;
 }) {
   const searchParams = useSearchParams();
   const { update: updateSession } = useSession();
-  const [status, setStatus] = useState<BillingStatus | null>(null);
+  const [status, setStatus] = useState<BillingStatus | null>({
+    plan: initialPlan,
+    status: "ACTIVE",
+    currentPeriodEnd: null,
+    cancelAtPeriodEnd: false,
+    billingConfigured: initialBillingConfigured,
+  });
   const [loading, setLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +85,7 @@ export function BillingSettingsClient({
   }, []);
 
   const currentPlan = status?.plan ?? initialPlan;
+  const billingConfigured = status?.billingConfigured ?? initialBillingConfigured;
 
   async function checkout(plan: "PRO" | "BUSINESS") {
     if (plan === "PRO" && externalProPurchaseUrl) {
@@ -94,6 +103,14 @@ export function BillingSettingsClient({
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
+        if (
+          plan === "PRO" &&
+          externalProPurchaseUrl &&
+          json.code === "LEMONSQUEEZY_NOT_CONFIGURED"
+        ) {
+          window.location.href = externalProPurchaseUrl;
+          return;
+        }
         setError(json.error ?? "Failed to create checkout link");
         return;
       }
@@ -158,7 +175,7 @@ export function BillingSettingsClient({
         <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-error">{error}</p>
       ) : null}
 
-      {!status?.billingConfigured && !externalProPurchaseUrl ? (
+      {!billingConfigured && !externalProPurchaseUrl ? (
         <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
           Lemon Squeezy is not configured. Add the API key, Store ID, and Variant IDs to .env.local, or run <code className="font-mono">npm run ls:check</code>.
         </p>
@@ -201,12 +218,12 @@ export function BillingSettingsClient({
               ) : (
                 <Button
                   className="mt-4 w-full"
-                  disabled={!externalProPurchaseUrl && !status?.billingConfigured}
+                  disabled={!externalProPurchaseUrl && !billingConfigured}
                   loading={loading === planKey}
                   loadingText="Opening…"
                   onClick={() => checkout(planKey)}
                 >
-                  {externalProPurchaseUrl
+                  {planKey === "PRO" && externalProPurchaseUrl
                     ? `Buy ${plan.name}`
                     : `Upgrade to ${plan.name}`}
                 </Button>
@@ -216,7 +233,7 @@ export function BillingSettingsClient({
         })}
       </div>
 
-      {currentPlan !== "FREE" && status?.billingConfigured ? (
+      {currentPlan !== "FREE" && billingConfigured ? (
         <div className="mt-8">
           <Button
             variant="outline"
