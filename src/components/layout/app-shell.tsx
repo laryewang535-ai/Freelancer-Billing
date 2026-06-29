@@ -71,7 +71,7 @@ export function AppShell({ user, isAdmin = false, children }: AppShellProps) {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="animate-fade-in-up">{children}</div>
+        {children}
       </main>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { COUNTRIES } from "@/lib/constants/countries";
 import { createClientSchema } from "@/lib/validators/client";
 import { Button, Input } from "@/components/auth/auth-ui";
@@ -60,6 +61,11 @@ export function ClientFormDialog({
     {}
   );
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -69,7 +75,7 @@ export function ClientFormDialog({
     }
   }, [open, initialValues]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   function updateField<K extends keyof ClientFormValues>(
     key: K,
@@ -140,11 +146,11 @@ export function ClientFormDialog({
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 sm:items-center">
       <button
         type="button"
-        className="absolute inset-0 bg-slate-900/40"
+        className="absolute inset-0"
         aria-label="Close"
         onClick={onClose}
       />
@@ -253,7 +259,8 @@ export function ClientFormDialog({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
